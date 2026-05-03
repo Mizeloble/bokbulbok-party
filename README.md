@@ -53,10 +53,13 @@ fly deploy             # 90초, 실 LTE 환경 검증용
 
 ```bash
 fly launch --copy-config --no-deploy   # 첫 배포 시 (이미 설정됨)
+fly volumes create coffee_data --size 1 --region nrt   # 히스토리 영구 볼륨 (최초 1회)
 fly deploy
 ```
 
 도쿄(nrt) 리전 + `shared-cpu-1x` / 512MB 한 대로 충분. 설정은 [`fly.toml`](fly.toml).
+
+**볼륨 메모**: `coffee_data`(1GB)는 `data/history.sqlite`만 보관. scale-to-zero(`auto_stop_machines = "stop"`)와 호환 — 머신이 자도 볼륨은 그대로 붙어있고, 깨어날 때 같은 파일이 다시 보임. **HA로 머신을 늘리면 볼륨도 분리되므로 단일 인스턴스 운영이 전제**(필요 시 외부 DB로 이전).
 
 ## 아키텍처 한눈에
 

@@ -27,3 +27,10 @@ primary_region = 'nrt'
   cpu_kind = 'shared'
   cpus = 1
   memory_mb = 512
+
+# 누적 게임 히스토리(SQLite)를 stop-start·재배포에도 살리는 영구 볼륨.
+# 배포 전 한 번만:  fly volumes create coffee_data --size 1 --region nrt
+# 단일 머신 전제 — HA로 머신 늘리면 볼륨도 머신마다 따로 생기므로 데이터가 갈라짐.
+[[mounts]]
+  source = 'coffee_data'
+  destination = '/app/data'
