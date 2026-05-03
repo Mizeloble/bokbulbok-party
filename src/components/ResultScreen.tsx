@@ -172,6 +172,7 @@ export function ResultScreen({ onReplay }: { onReplay?: () => void } = {}) {
           losers={losers}
           offsets={showReactionMs ? reactionOffsets : undefined}
           scores={showTriviaScores ? triviaFinalScores : undefined}
+          lossCount={result.history?.lossCount}
         />
 
         <div
@@ -561,10 +562,12 @@ function LoserBlock({
   losers,
   offsets,
   scores,
+  lossCount,
 }: {
   losers: { playerToken: string; nickname: string; color: string }[];
   offsets?: Record<string, number | null>;
   scores?: Record<string, number>;
+  lossCount?: Record<string, number>;
 }) {
   const n = losers.length;
   const nameSize = n === 1 ? 80 : n === 2 ? 56 : 44;
@@ -576,6 +579,9 @@ function LoserBlock({
       {losers.map((p) => {
         const offsetLabel = offsets ? formatReactionOffset(offsets[p.playerToken]) : null;
         const scoreVal = scores ? (scores[p.playerToken] ?? 0) : null;
+        // Show cumulative loss badge starting from 2nd time onward — first loss is just noise.
+        const totalLosses = lossCount?.[p.playerToken];
+        const showHistoryBadge = typeof totalLosses === 'number' && totalLosses >= 2;
         return (
           <div key={p.playerToken} className="flex flex-col items-center gap-3.5">
             <div
@@ -598,10 +604,15 @@ function LoserBlock({
               />
               <span>{p.nickname}</span>
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap justify-center">
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/[0.05] border border-white/[0.08] text-xs text-zinc-400 font-bold uppercase tracking-[0.06em]">
                 {ko.result.loserBadge}
               </div>
+              {showHistoryBadge && (
+                <div className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold tabular-nums border bg-amber-400/10 border-amber-400/30 text-amber-200">
+                  {ko.history.loserBadge(totalLosses!)}
+                </div>
+              )}
               {offsetLabel && (
                 <div
                   className={clsx(
