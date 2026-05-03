@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ko } from '@/lib/i18n';
+import { APP_VERSION } from '@/lib/version';
 
 export default function LandingPage() {
   const router = useRouter();
@@ -61,7 +62,8 @@ export default function LandingPage() {
           className="underline-offset-2 hover:underline hover:text-zinc-400"
         >
           {ko.credit.repoLabel}
-        </a>
+        </a>{' '}
+        · {ko.credit.version(APP_VERSION)}
       </footer>
     </main>
   );

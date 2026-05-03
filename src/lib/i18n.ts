@@ -237,6 +237,7 @@ export const ko = {
     authorUrl: 'mailto:jjmize.kim@samsung.com',
     repoLabel: 'GitHub',
     repoUrl: 'https://github.com/Mizeloble/ax-lunch-coffee/',
+    version: (v: string) => `v${v}`,
   },
 } as const;
 
