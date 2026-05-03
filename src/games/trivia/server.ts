@@ -2,6 +2,7 @@ import type { ReplayPayload } from '../../server/rooms';
 import type { ComputeResultInput, GameIntroTimings, GameServerModule } from '../types';
 import { GAME } from '../../lib/constants';
 import { TRIVIA_POOL_SORTED, type TriviaQuestion } from './questions';
+import { computeRunningScores } from './scoring';
 
 /**
  * Replay payload broadcast on game:start. Carries everything the client needs to
@@ -9,6 +10,13 @@ import { TRIVIA_POOL_SORTED, type TriviaQuestion } from './questions';
  *
  * `correctIndex` is the *post-shuffle* position. Choices are also already shuffled.
  * Both are server-authoritative; client never recomputes.
+ *
+ * `cumulativeScores` is filled in at result time (computeResult) and is empty in
+ * the broadcast at game:start — the client doesn't need it during the answer phase
+ * and exposing per-player ranking mid-round would leak who's ahead before reveal.
+ * Mid-round leaderboard rendering uses the client's local prediction (which mirrors
+ * the same `scoring.ts` formula), and the result screen uses the authoritative
+ * snapshot here.
  */
 export type TriviaReplayData = {
   schedule: {
@@ -23,7 +31,22 @@ export type TriviaReplayData = {
     question: string;
     choices: [string, string, string, string];
     correctIndex: 0 | 1 | 2 | 3;
+    /** Optional "did you know?" line for the result-screen detail view. */
+    note?: string;
   }>;
+  /**
+   * Per-player cumulative score timeline: scores[playerToken][qIndex] = total
+   * points after question qIndex (inclusive). Empty {} during the in-game broadcast,
+   * populated only in the result. Used by ResultScreen to display final scores.
+   */
+  scores: Record<string, number[]>;
+  /**
+   * Per-player per-question picks (post-shuffle choice index, or null = no answer).
+   * Empty {} during the in-game broadcast — exposing this mid-round would spoil
+   * everyone's answers. Populated only in the result, where it powers the
+   * "특이점" detail panel ("everyone got it right except…", or vice versa).
+   */
+  picks: Record<string, Array<0 | 1 | 2 | 3 | null>>;
 };
 
 // Mulberry32 — small fast deterministic PRNG. Same one reaction uses; copying instead
@@ -78,7 +101,7 @@ function shuffleChoices(
  * existing seed→output mappings stable.
  */
 export function buildTriviaPlan(seed: number): {
-  questions: TriviaReplayData['questions'];
+  questions: Omit<TriviaReplayData, 'scores'>['questions'];
   schedule: TriviaReplayData['schedule'];
   durationMs: number;
 } {
@@ -93,6 +116,7 @@ export function buildTriviaPlan(seed: number): {
       question: q.question,
       choices,
       correctIndex,
+      ...(q.note ? { note: q.note } : {}),
     };
   });
 
@@ -125,8 +149,10 @@ export function prepareTriviaIntro(seed: number): GameIntroTimings {
 
 type Entry = {
   token: string;
-  score: number;
-  // Sum of atOffsetMs for *correct* answers only. Smaller = faster on the questions you got right.
+  total: number;
+  cumulative: number[];
+  // Sum of atOffsetMs for *correct* answers only. Defensive tie-break for
+  // sub-ms-equal scores; primary ranking is by total points.
   speedSum: number;
 };
 
@@ -134,24 +160,21 @@ export const triviaServer: GameServerModule = {
   computeResult(input: ComputeResultInput): ReplayPayload {
     const { seed, players, loserCount, triviaAnswers } = input;
     const plan = buildTriviaPlan(seed);
+    const correctIndices = plan.questions.map((q) => q.correctIndex);
 
     const entries: Entry[] = players.map((p) => {
       const answers = triviaAnswers?.[p.playerToken] ?? [];
-      let score = 0;
+      const { cumulative, total } = computeRunningScores(answers, correctIndices);
       let speedSum = 0;
       for (let i = 0; i < plan.questions.length; i++) {
         const ans = answers[i];
-        if (!ans) continue;
-        if (ans.choice === plan.questions[i].correctIndex) {
-          score++;
-          speedSum += ans.atOffsetMs;
-        }
+        if (ans && ans.choice === correctIndices[i]) speedSum += ans.atOffsetMs;
       }
-      return { token: p.playerToken, score, speedSum };
+      return { token: p.playerToken, total, cumulative, speedSum };
     });
 
     entries.sort((a, b) => {
-      if (a.score !== b.score) return b.score - a.score; // higher score = better
+      if (a.total !== b.total) return b.total - a.total; // higher score = better
       if (a.speedSum !== b.speedSum) return a.speedSum - b.speedSum; // faster = better
       return a.token < b.token ? -1 : a.token > b.token ? 1 : 0;
     });
@@ -159,9 +182,22 @@ export const triviaServer: GameServerModule = {
     const ranking = entries.map((e) => e.token);
     const losers = ranking.slice(-loserCount);
 
+    const scores: Record<string, number[]> = {};
+    for (const e of entries) scores[e.token] = e.cumulative;
+
+    // Pull per-player picks straight from the input answer log (already in
+    // post-shuffle index space). Used by the result-screen "특이점" panel.
+    const picks: Record<string, Array<0 | 1 | 2 | 3 | null>> = {};
+    for (const p of players) {
+      const ans = triviaAnswers?.[p.playerToken] ?? [];
+      picks[p.playerToken] = plan.questions.map((_, i) => ans[i]?.choice ?? null);
+    }
+
     const data: TriviaReplayData = {
       schedule: plan.schedule,
       questions: plan.questions,
+      scores,
+      picks,
     };
 
     return {

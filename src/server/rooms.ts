@@ -57,6 +57,16 @@ export type TriviaState = {
   /** playerToken -> per-question first-answer (null = no answer yet). Length = openAts.length. */
   answers: Map<string, Array<TriviaAnswerRecord | null>>;
   finishTimer: NodeJS.Timeout;
+  /** Per-question standings broadcast timers (one per question close). Cleared on round end or reschedule. */
+  standingsTimers: NodeJS.Timeout[];
+  /** Post-shuffle correct index per question. Frozen at round start; used by short-circuit. */
+  correctIndices: ReadonlyArray<0 | 1 | 2 | 3>;
+  /** Player tokens that must each submit an answer to trigger the all-answered short-circuit. */
+  expectedTokens: ReadonlyArray<string>;
+  /** Wall-clock startAt for this round — needed to convert wall-clock back to offsets. */
+  startAt: number;
+  /** Reschedules timers + emits trivia:reschedule when called. Set by runTriviaRound. */
+  shortCircuitFromAnswer: (qIndex: number) => void;
 };
 
 export type RoomState = {
@@ -91,6 +101,7 @@ export function clearReaction(room: RoomState) {
 export function clearTrivia(room: RoomState) {
   if (!room.trivia) return;
   clearTimeout(room.trivia.finishTimer);
+  for (const t of room.trivia.standingsTimers) clearTimeout(t);
   room.trivia = undefined;
 }
 

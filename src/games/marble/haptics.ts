@@ -44,4 +44,16 @@ export const haptics = {
   reactionFalseStart(): void {
     vibrate([0, 30, 30, 30]);
   },
+  triviaCorrect(): void {
+    vibrate([0, 25, 30, 25]);
+  },
+  triviaWrong(): void {
+    vibrate([0, 50, 30, 80]);
+  },
+  triviaCombo(): void {
+    vibrate([0, 15, 25, 15, 25, 30]);
+  },
+  triviaUrgentTick(): void {
+    vibrate(15);
+  },
 };

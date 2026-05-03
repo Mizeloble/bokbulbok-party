@@ -44,6 +44,30 @@ export type ResultPayload = { ranking: string[]; losers: string[] };
 
 export type CountdownPayload = { startAt: number };
 
+/**
+ * Mid-round leaderboard snapshot for trivia. Emitted at each question's closeAt
+ * (i.e. when the reveal phase begins) so clients can show running totals during
+ * the reveal without learning what others picked before they answered themselves.
+ * Standings are sorted server-side, descending by score.
+ */
+export type TriviaStandingsPayload = {
+  qIndex: number;
+  standings: Array<{ playerToken: string; score: number; combo: number }>;
+};
+
+/**
+ * Trivia all-answered short-circuit: when every connected non-manual player has
+ * picked for the current question before the timer expires, the server collapses
+ * the remaining wait and advances. The new full schedule (offsets from startAt,
+ * length === question count) is broadcast so every client realigns its wall-clock
+ * phase calculation. Past offsets are unchanged; only `qIndex` and beyond shift.
+ */
+export type TriviaReschedulePayload = {
+  qIndex: number;
+  openAtOffsets: number[];
+  closeAtOffsets: number[];
+};
+
 export type ChargeStartPayload = { endsAt: number };
 export type ChargeStatePayload = { totals: Record<string, number>; cap: number };
 
@@ -70,6 +94,8 @@ export type ServerToClientEvents = {
   'charge:state': (payload: ChargeStatePayload) => void;
   'game:start': (payload: GameStartPayload) => void;
   'game:result': (payload: ResultPayload) => void;
+  'trivia:standings': (payload: TriviaStandingsPayload) => void;
+  'trivia:reschedule': (payload: TriviaReschedulePayload) => void;
 };
 
 export type ClientToServerEvents = {

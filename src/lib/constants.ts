@@ -36,13 +36,28 @@ export const GAME = {
   /** Reaction game: post-deadline buffer before broadcasting result, lets last in-flight tap arrive. */
   REACTION_TAIL_MS: 600,
   /** Trivia game: number of questions per round. */
-  TRIVIA_QUESTION_COUNT: 3,
-  /** Trivia game: time window per question (read + answer). */
-  TRIVIA_QUESTION_MS: 8000,
-  /** Trivia game: post-question reveal phase showing the correct answer. */
+  TRIVIA_QUESTION_COUNT: 5,
+  /** Trivia game: maximum time window per question (read + answer). When all
+   * connected non-manual players answer earlier, the server short-circuits and
+   * advances immediately, so this is the upper bound — typical play is faster. */
+  TRIVIA_QUESTION_MS: 6000,
+  /** Trivia game: post-question reveal phase showing the correct answer + the
+   * mid-round leaderboard inline. Length tuned so players have time to (1) see
+   * if they got it right, (2) read the +N toast, (3) glance at the standings —
+   * all in the same screen without a jarring context switch. */
   TRIVIA_REVEAL_MS: 2000,
-  /** Trivia game: tail buffer after the last reveal before broadcasting result. */
-  TRIVIA_TAIL_MS: 3000,
+  /** Trivia game: tail buffer between the end of the last reveal and the result broadcast. */
+  TRIVIA_TAIL_MS: 600,
+  /** Trivia scoring: minimum points for a correct answer (answered at the buzzer). */
+  TRIVIA_SCORE_BASE: 500,
+  /** Trivia scoring: maximum points for a correct answer (answered instantly). */
+  TRIVIA_SCORE_MAX: 1000,
+  /** Trivia scoring: per-step combo bonus added per consecutive correct beyond the first. */
+  TRIVIA_COMBO_BONUS: 100,
+  /** Trivia scoring: combo bonus caps at this many consecutive correct answers. */
+  TRIVIA_COMBO_CAP: 5,
+  /** Trivia scoring: multiplier applied to the LAST question's score (double-or-nothing finale). */
+  TRIVIA_LAST_QUESTION_MULT: 2,
 } as const;
 
 export const NICKNAME = {

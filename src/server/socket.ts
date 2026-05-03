@@ -13,6 +13,7 @@ import {
 } from './rooms';
 import { prepareGameIntro, runGame } from './game-runner';
 import { buildTriviaPlan, type TriviaReplayData } from '../games/trivia/server';
+import { computeRunningScores } from '../games/trivia/scoring';
 import { ko } from '../lib/i18n';
 import { GAME, NICKNAME, ROOM } from '../lib/constants';
 import { GAME_META } from '../games/types';
@@ -179,6 +180,9 @@ export function attachSocketHandlers(io: IO) {
       // First answer per question only.
       if (answers[qIndex]) return;
       answers[qIndex] = { choice, atOffsetMs: arrivalAt - openAt };
+      // After recording, see if everyone's done — if so, collapse the remaining
+      // wait and broadcast the new schedule.
+      room.trivia.shortCircuitFromAnswer(qIndex);
     });
 
     socket.on('reset', () => {
@@ -403,7 +407,10 @@ async function runTriviaRound(io: IO, room: RoomState) {
   const startAt = Date.now() + GAME.COUNTDOWN_MS;
   const openAts = plan.schedule.openAtOffsets.map((off) => startAt + off);
   const closeAts = plan.schedule.closeAtOffsets.map((off) => startAt + off);
-  const lastCloseAt = closeAts[closeAts.length - 1];
+  const correctIndices = plan.questions.map((q) => q.correctIndex);
+  // Players whose answers we wait for to trigger the all-answered short-circuit.
+  // Manual-only rooms (no expected tokens) fall back to running the full max-window timer.
+  const expectedTokens = connectedPlayers.filter((p) => !p.manual).map((p) => p.playerToken);
 
   // Status=countdown immediately; stash an intro replay so mid-play reconnects can
   // sync the schedule and questions via `currentRound.replay`.
@@ -411,6 +418,8 @@ async function runTriviaRound(io: IO, room: RoomState) {
   const introData: TriviaReplayData = {
     schedule: plan.schedule,
     questions: plan.questions,
+    scores: {},
+    picks: {},
   };
   const introReplay = {
     durationMs: plan.durationMs,
@@ -430,7 +439,9 @@ async function runTriviaRound(io: IO, room: RoomState) {
     );
   }
 
-  const finishTimer = setTimeout(async () => {
+  // Finalize the round: run computeResult, broadcast game:result. Reused by the
+  // regular finishTimer and rescheduled when short-circuit shifts the schedule.
+  const finishHandler = async () => {
     if (!getRoom(room.id) || room.currentRound?.startAt !== startAt) return;
     if (!room.trivia) return;
 
@@ -466,9 +477,115 @@ async function runTriviaRound(io: IO, room: RoomState) {
     room.status = 'result';
     io.to(room.id).emit('state', publicRoomState(room));
     io.to(room.id).emit('game:result', { ranking: replay.ranking, losers: replay.losers });
-  }, lastCloseAt + GAME.TRIVIA_TAIL_MS - Date.now());
+  };
 
-  room.trivia = { openAts, closeAts, answers, finishTimer };
+  // Per-question standings emit. Safe to call once per qi per round: if it fires
+  // after the round has moved on, the early-out guards no-op.
+  const emitStandings = (qi: number) => {
+    if (!getRoom(room.id) || room.currentRound?.startAt !== startAt) return;
+    if (!room.trivia) return;
+    const standings = connectedPlayers.map((p) => {
+      const ans = room.trivia!.answers.get(p.playerToken) ?? [];
+      const r = computeRunningScores(ans, correctIndices);
+      // Combo length up to and including question qi (consecutive correct ending at qi).
+      let combo = 0;
+      for (let i = 0; i <= qi; i++) {
+        if (r.perQuestion[i].score > 0) combo++;
+        else combo = 0;
+      }
+      return { playerToken: p.playerToken, score: r.cumulative[qi] ?? 0, combo };
+    });
+    standings.sort((a, b) =>
+      a.score !== b.score ? b.score - a.score : a.playerToken < b.playerToken ? -1 : 1,
+    );
+    io.to(room.id).emit('trivia:standings', { qIndex: qi, standings });
+  };
+
+  // Schedule the per-qi standings broadcasts. Fires at closeAt — the start of the
+  // reveal phase. The client renders standings inline alongside the answer reveal
+  // so the flow is "see your answer + see leaderboard" in one continuous screen
+  // rather than a jarring full-screen takeover. Returns the timer array so we can
+  // cancel/replace on short-circuit.
+  const scheduleStandingsFrom = (fromQi: number, currentCloseAts: number[]): NodeJS.Timeout[] => {
+    const timers: NodeJS.Timeout[] = [];
+    for (let qi = fromQi; qi < currentCloseAts.length; qi++) {
+      const delay = Math.max(0, currentCloseAts[qi] - Date.now());
+      const captureQi = qi;
+      timers.push(setTimeout(() => emitStandings(captureQi), delay));
+    }
+    return timers;
+  };
+
+  const scheduleFinishTimer = (newLastCloseAt: number) =>
+    setTimeout(
+      finishHandler,
+      Math.max(0, newLastCloseAt + GAME.TRIVIA_REVEAL_MS + GAME.TRIVIA_TAIL_MS - Date.now()),
+    );
+
+  // All-answered short-circuit. Called from trivia:answer after a player's pick is
+  // recorded. If every expected player has answered question `qIndex` and we're still
+  // inside its window, collapse the remaining wait — close this question NOW, shift
+  // every subsequent open/close forward by the saved time, and broadcast the new
+  // schedule so clients re-derive their phase. Standings emit fires immediately for
+  // the just-closed question.
+  const shortCircuitFromAnswer = (qIndex: number) => {
+    if (!room.trivia) return;
+    if (expectedTokens.length === 0) return; // no one to wait for; let the timer run
+    if (qIndex < 0 || qIndex >= room.trivia.closeAts.length) return;
+    const now = Date.now();
+    if (now >= room.trivia.closeAts[qIndex]) return; // already past; reveal will fire on its own
+    for (const tok of expectedTokens) {
+      const ans = room.trivia.answers.get(tok)?.[qIndex];
+      if (!ans) return; // someone hasn't answered yet
+    }
+
+    const shift = room.trivia.closeAts[qIndex] - now;
+    if (shift <= 0) return;
+
+    const newCloseAts = room.trivia.closeAts.slice();
+    const newOpenAts = room.trivia.openAts.slice();
+    newCloseAts[qIndex] = now;
+    for (let i = qIndex + 1; i < newCloseAts.length; i++) {
+      newCloseAts[i] -= shift;
+      newOpenAts[i] -= shift;
+    }
+    room.trivia.closeAts = newCloseAts;
+    room.trivia.openAts = newOpenAts;
+
+    // Cancel any pending standings timers (some may already have fired for past
+    // questions; clearTimeout on a fired timer is a no-op).
+    for (const t of room.trivia.standingsTimers) clearTimeout(t);
+    // Fire current question standings immediately (its closeAt is now), then schedule
+    // the rest from qIndex+1.
+    emitStandings(qIndex);
+    room.trivia.standingsTimers = scheduleStandingsFrom(qIndex + 1, newCloseAts);
+
+    // Reschedule the round-finalize timer to the new last close.
+    clearTimeout(room.trivia.finishTimer);
+    room.trivia.finishTimer = scheduleFinishTimer(newCloseAts[newCloseAts.length - 1]);
+
+    // Tell every client to realign its wall-clock phase to the new schedule.
+    io.to(room.id).emit('trivia:reschedule', {
+      qIndex,
+      openAtOffsets: newOpenAts.map((t) => t - startAt),
+      closeAtOffsets: newCloseAts.map((t) => t - startAt),
+    });
+  };
+
+  const finishTimer = scheduleFinishTimer(closeAts[closeAts.length - 1]);
+  const standingsTimers = scheduleStandingsFrom(0, closeAts);
+
+  room.trivia = {
+    openAts,
+    closeAts,
+    answers,
+    finishTimer,
+    standingsTimers,
+    correctIndices,
+    expectedTokens,
+    startAt,
+    shortCircuitFromAnswer,
+  };
   touch(room);
   io.to(room.id).emit('state', publicRoomState(room));
   io.to(room.id).emit('countdown', { startAt });

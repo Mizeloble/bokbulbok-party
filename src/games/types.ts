@@ -83,7 +83,7 @@ export const GAME_META = {
   },
   trivia: {
     emoji: '🧠',
-    estimatedSeconds: 33,
+    estimatedSeconds: 30,
     needsClientInput: true,
     needsPreCharge: false,
     enabled: true,
