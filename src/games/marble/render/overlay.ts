@@ -117,26 +117,23 @@ export function drawPersonalRankCard(
   const isLast = rank === total;
   const isMid = !isFirst && !isLast;
 
-  // Tier styling — gold for 1st (gradient), red for loser (with pulsing glow), dark
-  // for everyone in the middle (with the player's accent).
-  let bgTop: string, bgBottom: string, borderColor: string, headlineColor: string, subColor: string, glowColor: string;
+  // Tier styling — flat solid color per tier (gradients removed).
+  // Gold for 1st, red for loser (with pulsing halo), dark slate for the middle.
+  let bgColor: string, borderColor: string, headlineColor: string, subColor: string, glowColor: string;
   if (isFirst) {
-    bgTop = '#fde68a';
-    bgBottom = '#f59e0b';
+    bgColor = '#fbab03';
     borderColor = '#78350f';
     headlineColor = '#451a03';
     subColor = 'rgba(69,26,3,0.75)';
     glowColor = 'rgba(251,191,36,0.85)';
   } else if (isLast) {
-    bgTop = '#ef4444';
-    bgBottom = '#991b1b';
+    bgColor = '#f53d3d';
     borderColor = '#fff';
     headlineColor = '#fff';
     subColor = 'rgba(255,255,255,0.85)';
-    glowColor = 'rgba(239,68,68,0.95)';
+    glowColor = 'rgba(245,61,61,0.95)';
   } else {
-    bgTop = '#1f2937';
-    bgBottom = '#0f172a';
+    bgColor = '#1d2a3d';
     borderColor = '#fbbf24';
     headlineColor = '#fbbf24';
     subColor = 'rgba(255,255,255,0.75)';
@@ -166,11 +163,8 @@ export function drawPersonalRankCard(
   ctx.shadowColor = glowColor;
   ctx.shadowBlur = glowPulse * dpr;
 
-  // Background gradient (vertical)
-  const bgGrad = ctx.createLinearGradient(0, cy - cardH / 2, 0, cy + cardH / 2);
-  bgGrad.addColorStop(0, bgTop);
-  bgGrad.addColorStop(1, bgBottom);
-  ctx.fillStyle = bgGrad;
+  // Flat surface (gradient removed)
+  ctx.fillStyle = bgColor;
   roundRect(ctx, cx - cardW / 2, cy - cardH / 2, cardW, cardH, 18 * dpr);
   ctx.fill();
   ctx.shadowBlur = 0;
@@ -180,14 +174,6 @@ export function drawPersonalRankCard(
   ctx.lineWidth = 3 * dpr;
   roundRectPath(ctx, cx - cardW / 2, cy - cardH / 2, cardW, cardH, 18 * dpr);
   ctx.stroke();
-
-  // Subtle highlight band across the top (glassy sheen)
-  const sheen = ctx.createLinearGradient(0, cy - cardH / 2, 0, cy);
-  sheen.addColorStop(0, 'rgba(255,255,255,0.35)');
-  sheen.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = sheen;
-  roundRect(ctx, cx - cardW / 2 + 2, cy - cardH / 2 + 2, cardW - 4, cardH / 2 - 2, 16 * dpr);
-  ctx.fill();
 
   // Headline
   ctx.textAlign = 'center';
@@ -248,26 +234,14 @@ export function drawLoserBanner(
 
   // Strong pulsing red glow — this is the climactic loser reveal
   const glowAmt = 28 + 18 * Math.abs(Math.sin(nowMs * 0.008));
-  ctx.shadowColor = 'rgba(239,68,68,0.95)';
+  ctx.shadowColor = 'rgba(245,61,61,0.95)';
   ctx.shadowBlur = glowAmt * dpr;
 
-  // Vertical red gradient — matches the loser rank card (visual consistency)
-  const bgGrad = ctx.createLinearGradient(0, top, 0, top + bannerH);
-  bgGrad.addColorStop(0, '#ef4444');
-  bgGrad.addColorStop(0.55, '#b91c1c');
-  bgGrad.addColorStop(1, '#7f1d1d');
-  ctx.fillStyle = bgGrad;
+  // Flat red surface (gradient removed) — matches the loser rank card
+  ctx.fillStyle = '#f53d3d';
   roundRect(ctx, left, top, bannerW, bannerH, cornerR);
   ctx.fill();
   ctx.shadowBlur = 0;
-
-  // Glossy sheen across top half (frosted highlight)
-  const sheen = ctx.createLinearGradient(0, top, 0, top + bannerH * 0.5);
-  sheen.addColorStop(0, 'rgba(255,255,255,0.28)');
-  sheen.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = sheen;
-  roundRect(ctx, left + 2, top + 2, bannerW - 4, bannerH * 0.5 - 2, cornerR - 4);
-  ctx.fill();
 
   // White outer border
   ctx.strokeStyle = '#fff';
