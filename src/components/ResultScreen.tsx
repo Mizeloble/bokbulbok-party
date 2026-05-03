@@ -139,11 +139,25 @@ export function ResultScreen({ onReplay }: { onReplay?: () => void } = {}) {
 
   return (
     <main
-      className="fixed inset-0 z-30 flex flex-col items-center justify-center px-6 text-center overflow-hidden"
+      className="fixed inset-0 z-30 overflow-y-auto overscroll-contain text-center"
       style={{ background: 'radial-gradient(120% 80% at 50% 0%, #14141c 0%, #0b0b10 55%) #0b0b10' }}
     >
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
+      {/* Confetti canvas pinned to the viewport so it doesn't scroll with content. */}
+      <canvas
+        ref={canvasRef}
+        className="fixed inset-0 w-full h-full pointer-events-none z-0"
+      />
 
+      {/* min-h-full + justify-center keeps the result block vertically centered when
+          content fits the viewport, while gracefully growing taller (and scrolling)
+          when the trivia detail panel expands beyond the screen. */}
+      <div
+        className="relative z-10 min-h-full flex flex-col items-center justify-center px-6 py-8"
+        style={{
+          paddingTop: 'max(env(safe-area-inset-top), 32px)',
+          paddingBottom: 'max(env(safe-area-inset-bottom), 32px)',
+        }}
+      >
       <div className="relative z-10 w-full max-w-sm flex flex-col items-center">
         {/* Header chip — ☕ 오늘 커피값 × N명 */}
         <div className="inline-flex items-center gap-2 pl-3.5 pr-3 py-1.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-xs text-zinc-400 font-semibold whitespace-nowrap">
@@ -288,6 +302,7 @@ export function ResultScreen({ onReplay }: { onReplay?: () => void } = {}) {
             />
           );
         })()}
+      </div>
     </main>
   );
 }
