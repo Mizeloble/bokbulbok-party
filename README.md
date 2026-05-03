@@ -5,7 +5,7 @@
 호스트가 방을 열고 QR 코드를 띄우면 다른 사람들이 폰 카메라로 스캔해서 입장 → 게임 한 판 → 패자가 커피 ☕️.
 
 - **운영 배포**: [ax-lunch-coffee.fly.dev](https://ax-lunch-coffee.fly.dev) (Fly.io · 도쿄 nrt)
-- **상태**: v1.4 진행 — 마블 / 응원 마블 / 반응속도 활성. 슬롯·탈락 룰렛은 후속.
+- **상태**: v1.5 진행 — 마블 / 응원 마블 / 반응속도 / 일반 상식 퀴즈 활성. 슬롯·탈락 룰렛은 후속.
 
 ## 게임
 
@@ -14,6 +14,7 @@
 | 🏁 marble | 마블 레이스 | ~35초 | **활성 (v1)** |
 | 📣 marble-cheer | 응원 마블 레이스 | ~40초 | **활성 (v1.1)** — 시작 전 5초 탭 충전이 마블 물리에 미세 반영 |
 | ⚡ reaction | 동시탭 반응속도 | ~8초 | **활성 (v1.4)** — 회색 "준비…" → 노란 "지금!" 동시 탭, 가장 빠른 사람이 1등 |
+| 🧠 trivia | 일반 상식 퀴즈 | ~30초 | **활성 (v1.5)** — 4지선다 5문제, 속도·콤보 보너스, 마지막 문제 점수 2배 |
 | 🎰 slot | 슬롯머신 룰렛 | ~8초 | 비활성 (v1.2) |
 | 🎯 elimination | 탈락 룰렛 | ~20초 | 비활성 (v1.3) |
 
@@ -73,6 +74,8 @@ fly deploy
 - [`src/games/`](src/games/CLAUDE.md) — GameModule 인터페이스, 새 게임 추가 순서
 - [`src/games/marble/`](src/games/marble/CLAUDE.md) — 마블 시뮬·렌더, lazygyu 출처
 - [`src/games/marble-cheer/`](src/games/marble-cheer/CLAUDE.md) — 응원 충전 변형 (sim 공유)
+- [`src/games/reaction/`](src/games/reaction/CLAUDE.md) — 반응속도, 서버 도착 시각만 진실
+- [`src/games/trivia/`](src/games/trivia/CLAUDE.md) — 트리비아, 결정성·답변 윈도우·문제 풀 추가 규칙
 - [`src/components/`](src/components/CLAUDE.md) — 모바일 UI 규약, amber 위계
 - [`src/app/`](src/app/CLAUDE.md) — App Router 구조
 
@@ -120,6 +123,16 @@ fly deploy
 - [x] 폰 시계 편차 면역 — 클라 timestamp를 신뢰하지 않고 서버가 `Date.now() - goAt`로 offset 계산
 - [x] manual(폰 없는) 참가자는 자동 non-tapper 처리 (운빨 회피)
 - [x] 백그라운드 탭은 `document.visibilityState` 가드로 입력 무시
+
+### ✅ v1.5 — 일반 상식 퀴즈 🧠
+
+- [x] 4지선다 5문제 — 시드로 230문제 풀에서 비복원 추출 + 보기 셔플 (결정론)
+- [x] 점심 톤 문제 풀 230개 (정치·종교·회사 정보 제외)
+- [x] 속도·콤보 점수 — 빠를수록 가점, 연속 정답 시 보너스
+- [x] 마지막 문제 점수 2배 — 끝까지 역전 가능
+- [x] 전원 답변 시 즉시 다음 문제로 단축
+- [x] 결과 "특이점" 패널 — 다 맞혔는데 한 명만 틀린 라운드 등 outlier만 노출 (manual 참가자는 집계 제외)
+- [x] 답변 스푸핑 방지 — payload는 `{ qIndex, choice }`만, 서버 도착 시각만 진실
 
 ### 백로그 (우선순위 미정)
 
