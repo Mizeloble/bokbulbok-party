@@ -5,6 +5,7 @@ import { ko } from '@/lib/i18n';
 import { useRoomStore } from '@/store/room-store';
 import { GamePicker } from './GamePicker';
 import { GameIntro } from './GameIntro';
+import { HistorySection } from './HistorySection';
 import { InviteSheet } from './InviteSheet';
 import { getSocket } from '@/lib/socket-client';
 import type { GameId } from '@/games/types';
@@ -271,6 +272,8 @@ export function Lobby({ inviteUrl, onChangeNickname }: { inviteUrl: string; onCh
             </div>
           )}
         </div>
+
+        <HistorySection canReset={isHost} refreshKey={state.id} />
       </section>
 
       {/* sticky bottom CTA (host only) */}

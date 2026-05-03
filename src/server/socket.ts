@@ -20,6 +20,7 @@ import { GAME_META } from '../games/types';
 import type { TriviaPerPlayerAnswers } from '../games/types';
 import type { ClientToServerEvents, ServerToClientEvents } from '../lib/protocol';
 import { mulberry32 } from '../games/reaction/server';
+import { recordGame } from './history';
 
 type IO = IOServer<ClientToServerEvents, ServerToClientEvents>;
 
@@ -352,7 +353,7 @@ async function runReactionRound(io: IO, room: RoomState) {
     clearReaction(room);
     room.status = 'result';
     io.to(room.id).emit('state', publicRoomState(room));
-    io.to(room.id).emit('game:result', { ranking: replay.ranking, losers: replay.losers });
+    emitResultWithHistory(io, room, replay);
   }, deadlineAt + GAME.REACTION_TAIL_MS - Date.now());
 
   room.reaction = { goAt, deadlineAt, firstTaps: new Map(), finishTimer };
@@ -476,7 +477,7 @@ async function runTriviaRound(io: IO, room: RoomState) {
     clearTrivia(room);
     room.status = 'result';
     io.to(room.id).emit('state', publicRoomState(room));
-    io.to(room.id).emit('game:result', { ranking: replay.ranking, losers: replay.losers });
+    emitResultWithHistory(io, room, replay);
   };
 
   // Per-question standings emit. Safe to call once per qi per round: if it fires
@@ -666,11 +667,63 @@ async function runRound(io: IO, room: RoomState, chargeRatios: Record<string, nu
     if (!getRoom(room.id) || room.currentRound?.startAt !== startAt) return;
     room.status = 'result';
     io.to(room.id).emit('state', publicRoomState(room));
-    io.to(room.id).emit('game:result', { ranking: replay.ranking, losers: replay.losers });
+    emitResultWithHistory(io, room, replay);
   }, GAME.COUNTDOWN_MS + replay.durationMs);
 }
 
 // --- helpers ---------------------------------------------------------------
+
+/**
+ * Record this round into the persistent history DB and broadcast `game:result`
+ * with each loser's cumulative loss count attached. Bots are excluded; manual
+ * (host-added, phoneless) players are recorded as real participants. Identity
+ * is by trimmed nickname — see `src/server/history.ts`.
+ *
+ * Failure to write history must not block the game flow — the result event
+ * still goes out (without `history`) so clients aren't stuck on the playing screen.
+ */
+function emitResultWithHistory(
+  io: IO,
+  room: RoomState,
+  replay: { ranking: string[]; losers: string[] },
+) {
+  const realPlayers = [...room.players.values()].filter((p) => !p.bot);
+  const tokenToNick = new Map<string, string>();
+  for (const p of realPlayers) {
+    const nick = p.nickname.trim();
+    if (nick) tokenToNick.set(p.playerToken, nick);
+  }
+
+  const ranked = replay.ranking
+    .filter((tk) => tokenToNick.has(tk))
+    .map((tk) => ({
+      nickname: tokenToNick.get(tk)!,
+      was_loser: replay.losers.includes(tk),
+    }));
+
+  let lossCount: Record<string, number> | undefined;
+  try {
+    const { lossesByNickname } = recordGame({
+      gameId: room.currentRound?.gameId ?? room.gameId,
+      loserCount: room.loserCount,
+      ranking: ranked,
+    });
+    lossCount = {};
+    for (const tk of replay.losers) {
+      const nick = tokenToNick.get(tk);
+      if (nick) lossCount[tk] = lossesByNickname.get(nick) ?? 0;
+    }
+  } catch (err) {
+    console.error('history recordGame failed', err);
+    lossCount = undefined;
+  }
+
+  io.to(room.id).emit('game:result', {
+    ranking: replay.ranking,
+    losers: replay.losers,
+    history: lossCount ? { lossCount } : undefined,
+  });
+}
 
 type Failure = { ok: false; code: string; message: string };
 

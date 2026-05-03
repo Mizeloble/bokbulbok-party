@@ -9,5 +9,11 @@ node_modules/
 .fly/
 tsconfig.tsbuildinfo
 
+# Persistent history DB (created at runtime in data/)
+data/*.sqlite
+data/*.sqlite-journal
+data/*.sqlite-wal
+data/*.sqlite-shm
+
 # Claude Code per-project state
 .claude/
