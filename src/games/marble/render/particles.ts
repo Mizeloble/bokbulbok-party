@@ -1,5 +1,5 @@
 import type { Particle, Pane } from './types';
-import { VIEW_HEIGHT_METERS } from './constants';
+import { VIEW_HEIGHT_METERS, ZOOM_MAX } from './constants';
 
 export function spawnFinishBurst(pool: Particle[], x: number, y: number, color: string, intensity: number) {
   const palette = [color, '#fbbf24', '#ffffff', '#f472b6', '#a3e635', '#22d3ee', '#fb923c'];
@@ -53,6 +53,7 @@ export function drawParticles(
   camY: number,
   zoom: number,
   bounds: { minX: number; maxX: number },
+  zoomCenterX: number,
 ) {
   const { px, py, pw, ph, particles, bursts } = pane;
   // Mirror drawScene's horizontal margin so particles use the same world→pixel mapping.
@@ -62,7 +63,10 @@ export function drawParticles(
   const baseScale = Math.min(fitWidth / trackXSpan, ph / VIEW_HEIGHT_METERS);
   const scale = baseScale * zoom;
   const trackCenterX = (bounds.minX + bounds.maxX) / 2;
-  const offsetX = px + pw / 2 - trackCenterX * scale;
+  // Match drawScene's zoom-aware horizontal centering so particles stay locked to the scene.
+  const zoomFrac = Math.max(0, Math.min(1, (zoom - 1) / Math.max(1e-6, ZOOM_MAX - 1)));
+  const camX = trackCenterX + (zoomCenterX - trackCenterX) * zoomFrac;
+  const offsetX = px + pw / 2 - camX * scale;
   const offsetY = py + ph * 0.55 - camY * scale;
   const toPx = (wx: number, wy: number) => [wx * scale + offsetX, wy * scale + offsetY] as const;
 

@@ -1,6 +1,6 @@
 import type { SimulationResult } from '../sim';
 import type { Pane, PlayerInfo } from './types';
-import { MARBLE_RADIUS, VIEW_HEIGHT_METERS } from './constants';
+import { MARBLE_RADIUS, VIEW_HEIGHT_METERS, ZOOM_MAX } from './constants';
 import { lerp, lowerBound, roundRect, upperBound } from './canvas-utils';
 
 /**
@@ -26,6 +26,7 @@ export function drawScene(
   sortedYs: number[],
   labelWidths: Map<string, number>,
   frameIdx: number,
+  zoomCenterX: number,
 ) {
   const { px, py, pw, ph } = pane;
   // Coordinate system: fit width with zoom. Shrink the available width by a small
@@ -38,7 +39,12 @@ export function drawScene(
   const baseScale = Math.min(fitWidth / trackXSpan, ph / VIEW_HEIGHT_METERS);
   const scale = baseScale * zoom;
   const trackCenterX = (replay.bounds.minX + replay.bounds.maxX) / 2;
-  const offsetX = px + pw / 2 - trackCenterX * scale;
+  // The goal funnel often sits off-center relative to the bounds box (e.g. lazygyu's
+  // "Wheel of fortune" funnels to x≈15.55 while bounds center is x≈12.6). Without this
+  // shift, the final zoom-in puts the goal noticeably right of screen center.
+  const zoomFrac = Math.max(0, Math.min(1, (zoom - 1) / Math.max(1e-6, ZOOM_MAX - 1)));
+  const camX = trackCenterX + (zoomCenterX - trackCenterX) * zoomFrac;
+  const offsetX = px + pw / 2 - camX * scale;
   const offsetY = py + ph * 0.55 - camY * scale; // camera centered at 55% from top
 
   const toPx = (wx: number, wy: number) => [wx * scale + offsetX, wy * scale + offsetY] as const;

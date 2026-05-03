@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { ko } from '@/lib/i18n';
 import { haptics } from './haptics';
 import type { SimulationResult } from './sim';
-import { CAMERA_EASE_RATE, INSET_FADE_RATE } from './render/constants';
+import { CAMERA_EASE_RATE, INSET_FADE_RATE, ZOOM_THRESHOLD } from './render/constants';
 import { computeZoom } from './render/camera';
 import { elapsedToFrameF } from './render/replay';
 import { drawParticles, spawnFinishBurst } from './render/particles';
@@ -70,6 +70,25 @@ export function MarbleRenderer({ startAt, durationMs, replay, players, myPlayerT
     }
     sortedEntities.sort((a, b) => a.y - b.y);
     const sortedYs = sortedEntities.map((e) => e.y);
+
+    // Horizontal focal point for the zoom-in: the goal funnel often sits off-center
+    // relative to the bounding box (e.g. lazygyu Wheel of fortune funnels to x≈15.55
+    // while bounds center is x≈12.6). We sample polyline points within the zoom band
+    // around `zoomY` and average their X extents — drawScene then eases between
+    // bounds-center (no zoom) and this point (full zoom) so the goal stays centered.
+    let zMinX = Infinity, zMaxX = -Infinity;
+    for (const e of polylineEntities) {
+      if (e.shape.type !== 'polyline') continue;
+      for (const [px, py] of e.shape.points) {
+        if (Math.abs(e.y + py - replay.zoomY) > ZOOM_THRESHOLD) continue;
+        const ax = e.x + px;
+        if (ax < zMinX) zMinX = ax;
+        if (ax > zMaxX) zMaxX = ax;
+      }
+    }
+    const zoomCenterX = Number.isFinite(zMinX)
+      ? (zMinX + zMaxX) / 2
+      : (replay.bounds.minX + replay.bounds.maxX) / 2;
 
     // Pre-measure nickname widths once instead of measureText-per-marble-per-frame.
     ctx.font = `bold ${14 * dpr}px sans-serif`;
@@ -252,8 +271,8 @@ export function MarbleRenderer({ startAt, durationMs, replay, players, myPlayerT
       const mainShakeY = mainPane.shake > 0 ? (Math.random() - 0.5) * mainPane.shake * 8 * dpr : 0;
       ctx.save();
       if (mainShakeX || mainShakeY) ctx.translate(mainShakeX, mainShakeY);
-      drawScene(ctx, mainPane, camY, camZoom, dpr, replay, cur, next, tFrac, elapsedSec, playerByToken, myPlayerToken, polylineEntities, sortedEntities, sortedYs, labelWidths, idx);
-      drawParticles(ctx, mainPane, dtSec, dpr, camY, camZoom, replay.bounds);
+      drawScene(ctx, mainPane, camY, camZoom, dpr, replay, cur, next, tFrac, elapsedSec, playerByToken, myPlayerToken, polylineEntities, sortedEntities, sortedYs, labelWidths, idx, zoomCenterX);
+      drawParticles(ctx, mainPane, dtSec, dpr, camY, camZoom, replay.bounds, zoomCenterX);
       ctx.restore();
       drawPaneFrame(ctx, mainPane, dpr, true);
 
@@ -269,8 +288,8 @@ export function MarbleRenderer({ startAt, durationMs, replay, players, myPlayerT
         roundedClip(ctx, insetPane.px, insetPane.py, insetPane.pw, insetPane.ph, 10 * dpr);
         ctx.fillStyle = '#0b0b10';
         ctx.fillRect(insetPane.px, insetPane.py, insetPane.pw, insetPane.ph);
-        drawScene(ctx, insetPane, insetCamY, insetCamZoom, dpr, replay, cur, next, tFrac, elapsedSec, playerByToken, myPlayerToken, polylineEntities, sortedEntities, sortedYs, labelWidths, idx);
-        drawParticles(ctx, insetPane, dtSec, dpr, insetCamY, insetCamZoom, replay.bounds);
+        drawScene(ctx, insetPane, insetCamY, insetCamZoom, dpr, replay, cur, next, tFrac, elapsedSec, playerByToken, myPlayerToken, polylineEntities, sortedEntities, sortedYs, labelWidths, idx, zoomCenterX);
+        drawParticles(ctx, insetPane, dtSec, dpr, insetCamY, insetCamZoom, replay.bounds, zoomCenterX);
         ctx.restore();
         drawPaneFrame(ctx, insetPane, dpr, false);
       } else if (insetPane.particles.length > 0) {
