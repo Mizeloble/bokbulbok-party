@@ -163,7 +163,7 @@ export function ResultScreen({ onReplay }: { onReplay?: () => void } = {}) {
         <div className="inline-flex items-center gap-2 pl-3.5 pr-3 py-1.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-xs text-zinc-400 font-semibold whitespace-nowrap">
           <span className="text-sm">☕️</span>
           <span>{ko.result.headerChip}</span>
-          <span className="px-2 py-0.5 rounded-full bg-amber-400 text-zinc-900 font-extrabold text-[11px]">
+          <span className="px-2 py-0.5 rounded-full bg-amber-400 text-zinc-900 font-extrabold text-xs">
             {ko.result.countBadge(losers.length)}
           </span>
         </div>
@@ -406,7 +406,7 @@ function TriviaDetailPanel({
             ))
           )}
           {(allRight > 0 || allWrong > 0 || allSkipped > 0) && (
-            <div className="px-1 pt-1 text-[11px] text-zinc-500 text-center">
+            <div className="px-1 pt-1 text-xs text-zinc-500 text-center">
               {ko.trivia.detailSkippedSummary(allRight, allWrong)}
               {allSkipped > 0 && ` · ${allSkipped}문제 ${ko.trivia.detailAllNone}`}
             </div>
@@ -441,13 +441,13 @@ function OutlierCard({
   return (
     <div className="rounded-xl bg-zinc-900/80 border border-zinc-800 px-3.5 py-3 text-left">
       <div className="flex items-center gap-2 mb-1.5">
-        <span className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500 tabular-nums">
+        <span className="text-[11px] font-black uppercase tracking-[0.18em] text-zinc-500 tabular-nums">
           {ko.trivia.detailQuestionNum(qIndex + 1, 0)}
         </span>
-        <span className="text-[9px] font-black uppercase tracking-[0.16em] text-amber-400/80">
+        <span className="text-[11px] font-black uppercase tracking-[0.16em] text-amber-400/80">
           {question.category}
         </span>
-        <span className="ml-auto text-[10px] font-black text-zinc-400 tabular-nums">
+        <span className="ml-auto text-[11px] font-black text-zinc-400 tabular-nums">
           {ko.trivia.detailHighlightHits(row.rightTokens.length, totalReal)}
         </span>
       </div>
@@ -521,7 +521,7 @@ function PlayerChipRow({
         : 'bg-zinc-800 ring-zinc-700';
   return (
     <div className="mt-1.5">
-      <div className={clsx('text-[10px] font-black uppercase tracking-wider mb-1', labelColor)}>
+      <div className={clsx('text-[11px] font-black uppercase tracking-wider mb-1', labelColor)}>
         {label}
       </div>
       <ul className="flex flex-wrap gap-1.5">
@@ -533,7 +533,7 @@ function PlayerChipRow({
             <li
               key={token}
               className={clsx(
-                'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] ring-1',
+                'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs ring-1',
                 chipBg,
                 isMe && 'ring-amber-300/60',
               )}
@@ -599,13 +599,13 @@ function LoserBlock({
               <span>{p.nickname}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/[0.05] border border-white/[0.08] text-[11px] text-zinc-400 font-bold uppercase tracking-[0.06em]">
+              <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/[0.05] border border-white/[0.08] text-xs text-zinc-400 font-bold uppercase tracking-[0.06em]">
                 {ko.result.loserBadge}
               </div>
               {offsetLabel && (
                 <div
                   className={clsx(
-                    'inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold tabular-nums border',
+                    'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold tabular-nums border',
                     offsetLabel.tone === 'rose'
                       ? 'bg-rose-500/15 border-rose-500/30 text-rose-300'
                       : offsetLabel.tone === 'dim'
@@ -617,7 +617,7 @@ function LoserBlock({
                 </div>
               )}
               {scoreVal != null && (
-                <div className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold tabular-nums border bg-amber-400/10 border-amber-400/30 text-amber-200">
+                <div className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold tabular-nums border bg-amber-400/10 border-amber-400/30 text-amber-200">
                   {ko.trivia.yourScore(scoreVal)}
                 </div>
               )}

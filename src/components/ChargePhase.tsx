@@ -124,7 +124,7 @@ export function ChargePhase() {
     >
       {/* Header */}
       <div className="px-6 pt-6 text-center">
-        <div className="text-[11px] uppercase tracking-[0.18em] text-amber-400 font-bold">
+        <div className="text-xs uppercase tracking-[0.18em] text-amber-400 font-bold">
           {ko.charge.title}
         </div>
         <div className="mt-1 text-sm text-zinc-300">{ko.charge.subtitle}</div>
@@ -174,7 +174,7 @@ export function ChargePhase() {
       <div className="px-6 pb-4 space-y-3">
         <Gauge label={ko.charge.myGauge} ratio={myRatio} color={myColor} />
         <Gauge label={ko.charge.avgGauge} ratio={avgRatio} color="#a1a1aa" />
-        <p className="text-[11px] text-zinc-600 text-center">{ko.charge.manualNote}</p>
+        <p className="text-xs text-zinc-600 text-center">{ko.charge.manualNote}</p>
       </div>
 
       <style jsx>{`
@@ -191,7 +191,7 @@ function Gauge({ label, ratio, color }: { label: string; ratio: number; color: s
   const pct = Math.round(Math.max(0, Math.min(1, ratio)) * 100);
   return (
     <div>
-      <div className="flex justify-between text-[11px] text-zinc-500 mb-1">
+      <div className="flex justify-between text-xs text-zinc-500 mb-1">
         <span>{label}</span>
         <span className="tabular-nums">{pct}%</span>
       </div>

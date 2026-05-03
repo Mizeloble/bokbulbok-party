@@ -155,7 +155,7 @@ export function ReactionRenderer({
             <div className="text-sm font-black tracking-tight">
               {ko.reaction.falseStartLockedTitle}
             </div>
-            <div className="mt-1 text-[11px] font-medium leading-snug text-rose-50/90">
+            <div className="mt-1 text-xs font-medium leading-snug text-rose-50/90">
               {ko.reaction.falseStartLockedRule}
             </div>
           </div>
@@ -190,7 +190,7 @@ export function ReactionRenderer({
 function ReadyView({ progress }: { progress: number }) {
   return (
     <>
-      <div className="text-[11px] uppercase tracking-[0.18em] text-amber-400/80 font-bold">
+      <div className="text-xs uppercase tracking-[0.18em] text-amber-400/80 font-bold">
         {ko.reaction.readySub}
       </div>
       <div
@@ -231,7 +231,7 @@ function GoView({ myOffsetMs }: { myOffsetMs: number | null }) {
       {myOffsetMs != null && (
         <div className="mt-8 rounded-2xl bg-zinc-950/15 px-5 py-3 text-2xl font-black tabular-nums text-zinc-950">
           {ko.reaction.myTime(myOffsetMs)}
-          <div className="mt-0.5 text-[11px] font-bold uppercase tracking-wider text-zinc-950/70">
+          <div className="mt-0.5 text-xs font-bold uppercase tracking-wider text-zinc-950/70">
             {ko.reaction.youTapped}
           </div>
         </div>

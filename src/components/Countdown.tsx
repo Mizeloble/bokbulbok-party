@@ -100,7 +100,7 @@ export function Countdown({ startAt }: { startAt: number }) {
         >
           {sec}
         </div>
-        <div className="absolute bottom-20 left-0 right-0 text-center text-[11px] text-zinc-500 uppercase tracking-[0.18em]">
+        <div className="absolute bottom-20 left-0 right-0 text-center text-xs text-zinc-500 uppercase tracking-[0.18em]">
           {ko.game.countdownPreSub}
         </div>
       </div>
@@ -145,7 +145,7 @@ export function Countdown({ startAt }: { startAt: number }) {
         >
           {ko.game.countdown}
         </div>
-        <div className="absolute bottom-20 left-0 right-0 text-center text-[11px] text-zinc-500 uppercase tracking-[0.18em]">
+        <div className="absolute bottom-20 left-0 right-0 text-center text-xs text-zinc-500 uppercase tracking-[0.18em]">
           {ko.game.countdownGoSub}
         </div>
       </div>

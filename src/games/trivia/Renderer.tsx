@@ -302,14 +302,14 @@ function Header({
   return (
     <div className="flex items-center justify-between px-4 pt-2 pb-1.5">
       <div className="flex items-baseline gap-2">
-        <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">
+        <span className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">
           🧠 {ko.games.trivia}
         </span>
         {questionLabel && (
           <span className="text-sm font-black text-amber-400 tabular-nums">{questionLabel}</span>
         )}
         {isLast && (
-          <span className="rounded-md bg-rose-500/20 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-rose-300 ring-1 ring-rose-500/40">
+          <span className="rounded-md bg-rose-500/20 px-1.5 py-0.5 text-[11px] font-black uppercase tracking-wider text-rose-300 ring-1 ring-rose-500/40">
             {ko.trivia.lastQuestionBadge}
           </span>
         )}
@@ -439,7 +439,7 @@ function QuestionView({
           revealing ? 'px-3.5 py-2.5 mb-2.5' : 'px-4 py-5 mb-4',
         )}
       >
-        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-400/80">
+        <div className="text-[11px] font-black uppercase tracking-[0.2em] text-amber-400/80">
           {question.category}
         </div>
         <div
@@ -508,7 +508,7 @@ function QuestionView({
                 <span className="text-xs font-black text-emerald-300">{ko.trivia.correctReveal}</span>
               )}
               {!revealing && picked && (
-                <span className="text-[10px] font-black uppercase tracking-wider text-amber-300">
+                <span className="text-[11px] font-black uppercase tracking-wider text-amber-300">
                   {ko.trivia.answered}
                 </span>
               )}
@@ -538,7 +538,7 @@ function InlineStandings({
       className="mt-3 rounded-2xl bg-zinc-900/85 ring-1 ring-zinc-800 px-3 py-3"
       style={{ animation: 'trivia-inline-standings 280ms ease-out both' }}
     >
-      <div className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500 px-1 pb-2">
+      <div className="text-[11px] font-black uppercase tracking-[0.18em] text-zinc-500 px-1 pb-2">
         📊 {ko.trivia.midRankTitle}
       </div>
       <ul className="space-y-1.5">
@@ -591,7 +591,7 @@ function InlineStandings({
                 {player?.nickname ?? '—'}
               </span>
               {s.combo >= 2 && (
-                <span className="rounded-md bg-rose-500/15 px-1 py-0.5 text-[10px] font-black text-rose-300 tabular-nums ring-1 ring-rose-500/30">
+                <span className="rounded-md bg-rose-500/15 px-1 py-0.5 text-[11px] font-black text-rose-300 tabular-nums ring-1 ring-rose-500/30">
                   🔥{s.combo}
                 </span>
               )}

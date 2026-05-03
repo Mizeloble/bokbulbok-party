@@ -75,7 +75,7 @@ export function Lobby({ inviteUrl, onChangeNickname }: { inviteUrl: string; onCh
       <header className="px-4 pt-4 pb-2 flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="font-bold text-base truncate -tracking-wide">{ko.app.title}</div>
-          <div className="text-zinc-500 text-[11px] mt-0.5">
+          <div className="text-zinc-500 text-xs mt-0.5">
             {ko.lobby.roomBadge(state.id, isHost)}
           </div>
         </div>
@@ -154,7 +154,7 @@ export function Lobby({ inviteUrl, onChangeNickname }: { inviteUrl: string; onCh
 
         {/* participants */}
         <div>
-          <div className="text-[11px] text-zinc-400 mb-2 font-bold uppercase tracking-[0.05em] flex justify-between items-center">
+          <div className="text-xs text-zinc-400 mb-2 font-bold uppercase tracking-[0.05em] flex justify-between items-center">
             <span>{ko.lobby.rosterCount(connectedCount)}</span>
             {someOffline && (
               <span className="text-zinc-600 normal-case tracking-normal font-normal">
@@ -184,7 +184,7 @@ export function Lobby({ inviteUrl, onChangeNickname }: { inviteUrl: string; onCh
                   />
                   <span className="truncate flex-1 min-w-0">{p.nickname}</span>
                   {isMe && (
-                    <span className="text-[10px] font-bold text-amber-200 bg-amber-200/10 px-1.5 py-0.5 rounded">
+                    <span className="text-[11px] font-bold text-amber-200 bg-amber-200/10 px-1.5 py-0.5 rounded">
                       {ko.lobby.meBadge}
                     </span>
                   )}
@@ -266,7 +266,7 @@ export function Lobby({ inviteUrl, onChangeNickname }: { inviteUrl: string; onCh
                   ×
                 </button>
               </div>
-              <p className="mt-1.5 text-[11px] text-zinc-500">{ko.lobby.addManualHint}</p>
+              <p className="mt-1.5 text-xs text-zinc-500">{ko.lobby.addManualHint}</p>
               {manualError && <p className="mt-1 text-xs text-rose-400">{manualError}</p>}
             </div>
           )}
@@ -294,7 +294,7 @@ export function Lobby({ inviteUrl, onChangeNickname }: { inviteUrl: string; onCh
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-[11px] text-zinc-400 mb-2 font-bold uppercase tracking-[0.05em]">
+    <div className="text-xs text-zinc-400 mb-2 font-bold uppercase tracking-[0.05em]">
       {children}
     </div>
   );
