@@ -130,7 +130,7 @@ export async function simulateRace(
   // Anti-stuck (ported from lazygyu/src/marble.ts): if marble barely moves for STUCK_DELAY ms, shake it
   const lastPos = new Map<number, { x: number; y: number }>();
   const stuckMs = new Map<number, number>();
-  const STUCK_DELAY_MS = 1500;
+  const STUCK_DELAY_MS = 600;
   // Velocity threshold: ~1.5 m/s (originally "5cm per 30Hz frame"). Scale per-frame distance with FPS.
   const stuckDistPerFrame = 0.05 * (30 / FPS);
   const STUCK_DIST_SQ = stuckDistPerFrame * stuckDistPerFrame;
