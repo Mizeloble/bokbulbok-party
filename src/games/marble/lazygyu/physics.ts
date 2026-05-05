@@ -78,7 +78,14 @@ export class Box2dPhysics {
 
       const fixtureDef = new this.Box2D.b2FixtureDef();
       fixtureDef.set_density(entity.props.density);
-      fixtureDef.set_restitution(entity.props.restitution);
+      // Floor restitution at 0.3 so the many `restitution: 0` static pegs in maps.ts
+      // don't form perfect stable-equilibrium pockets between two pegs (a major
+      // cause of mid-race stalls). Values that explicitly set restitution > 0.3
+      // (e.g. bouncy paddles at 1.5) keep their original feel.
+      fixtureDef.set_restitution(Math.max(0.3, entity.props.restitution));
+      // box2d default friction (0.2) is high enough that marbles can grip pegs
+      // and rest on them — drop to 0.1 so contacts slide off naturally.
+      fixtureDef.set_friction(0.1);
 
       let shape;
       switch (entity.shape.type) {
@@ -132,7 +139,10 @@ export class Box2dPhysics {
    * (used by `marble-cheer`). At max ratio: radius -18%, density +35%. The renderer
    * draws an outer glow + a slightly smaller body proportional to ratio (see
    * scene.ts), so the "응원 받은 마블" cue is unmistakable visually as well as
-   * mechanically. Untouched marbles (`marble`) pass `0` → identical to legacy.
+   * mechanically. Untouched marbles (`marble`) pass `0` → identical to legacy
+   * relative behavior; absolute physics tone is now glass-marble (restitution 0.3,
+   * low friction, mild damping, CCD bullet) rather than the dead clay of stock
+   * lazygyu defaults.
    */
   createMarble(id: number, x: number, y: number, chargeRatio = 0): void {
     const ratio = Math.max(0, Math.min(1, chargeRatio));
@@ -143,11 +153,29 @@ export class Box2dPhysics {
     const bodyDef = new this.Box2D.b2BodyDef();
     bodyDef.set_type(this.Box2D.b2_dynamicBody);
     bodyDef.set_position(new this.Box2D.b2Vec2(x, y));
+    // Mild air drag so terminal speed doesn't run away on long drops.
+    bodyDef.set_linearDamping(0.05);
+    // Kill the "spinning forever in air" look — marbles taper their spin naturally.
+    bodyDef.set_angularDamping(0.1);
+    // CCD on: at 10+ m/s a marble can travel its own diameter in one substep,
+    // which occasionally tunnelled through thin pegs.
+    bodyDef.set_bullet(true);
 
     const body = this.world.CreateBody(bodyDef);
-    // Seeded RNG instead of Math.random() so density (and therefore the result) is reproducible.
+
+    // Seeded RNG instead of Math.random() so density (and therefore the result)
+    // is reproducible. Order/count of rng() calls in this method must not change.
     const baseDensity = 1 + this.rng();
-    body.CreateFixture(circleShape, baseDensity * (1 + 0.35 * ratio));
+    const fix = new this.Box2D.b2FixtureDef();
+    fix.set_shape(circleShape);
+    fix.set_density(baseDensity * (1 + 0.35 * ratio));
+    // Low friction so marbles slide off pegs instead of resting on them. Combines
+    // with peg friction 0.1 via box2d's mix → ~0.07 effective.
+    fix.set_friction(0.05);
+    // Glass-marble bounce. Mixes by max() with peg restitution (0.3 floor) → 0.3.
+    fix.set_restitution(0.3);
+    body.CreateFixture(fix);
+
     body.SetAwake(false);
     body.SetEnabled(false);
     this.marbleMap[id] = body;
@@ -156,8 +184,12 @@ export class Box2dPhysics {
   shakeMarble(id: number): void {
     const body = this.marbleMap[id];
     if (body) {
+      // Bias the unstuck impulse downward (+Y is the goal direction in this map's
+      // gravity) and keep magnitude small so we nudge the marble loose without
+      // flicking it across the screen. rng() is still called twice in the same
+      // order so determinism is preserved.
       body.ApplyLinearImpulseToCenter(
-        new this.Box2D.b2Vec2(this.rng() * 10 - 5, this.rng() * 10 - 5),
+        new this.Box2D.b2Vec2(this.rng() * 4 - 2, 2 + this.rng() * 3),
         true,
       );
     }
@@ -205,7 +237,10 @@ export class Box2dPhysics {
     });
     this.deleteCandidates = [];
 
-    this.world.Step(deltaSeconds, 6, 2);
+    // Bumped from (6, 2) → (8, 3): the start grid drops 4–12 marbles in one
+    // tight band and contact resolution sometimes produced odd jitters there.
+    // Server-side single-pass sim, so the extra iters are free in practice.
+    this.world.Step(deltaSeconds, 8, 3);
 
     for (let i = this.entities.length - 1; i >= 0; i--) {
       const entity = this.entities[i];
