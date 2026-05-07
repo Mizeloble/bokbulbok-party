@@ -13,6 +13,7 @@ import { ChargePhase } from '@/components/ChargePhase';
 import { ResultScreen } from '@/components/ResultScreen';
 import { MarbleRenderer } from '@/games/marble/Renderer';
 import type { SimulationResult } from '@/games/marble/sim';
+import { MarbleTiltRenderer, type MarbleTiltIntroData } from '@/games/marble-tilt/Renderer';
 import { ReactionRenderer } from '@/games/reaction/Renderer';
 import type { ReactionReplayData } from '@/games/reaction/server';
 import { TriviaRenderer } from '@/games/trivia/Renderer';
@@ -217,11 +218,13 @@ export default function RoomClient({
   // marble and marble-cheer share the same renderer (same SimulationResult shape).
   const isMarbleLikeGame =
     !!gameStart && (gameStart.gameId === 'marble' || gameStart.gameId === 'marble-cheer');
+  const isMarbleTiltGame = !!gameStart && gameStart.gameId === 'marble-tilt';
   const isReactionGame = !!gameStart && gameStart.gameId === 'reaction';
   const isTriviaGame = !!gameStart && gameStart.gameId === 'trivia';
   // Reaction and trivia have nothing to "watch" after the round ends — flip to
   // result immediately. Marble keeps the renderer visible past the flip so replay
-  // frames finish, gated by a tap-to-continue prompt.
+  // frames finish, gated by a tap-to-continue prompt. Marble-tilt also keeps the
+  // gate so the loser-decided fanfare has time to land.
   const skipResultGate = isReactionGame || isTriviaGame;
   const showGame =
     replayPlayed &&
@@ -251,6 +254,18 @@ export default function RoomClient({
             startAt={effectiveStartAt}
             durationMs={gameStart.durationMs}
             replay={gameStart.replay as SimulationResult}
+            players={gameStart.players}
+            myPlayerToken={myToken}
+          />
+        </div>
+      )}
+
+      {showGame && gameStart && isMarbleTiltGame && (
+        <div className="fixed inset-0 z-20">
+          <MarbleTiltRenderer
+            key={effectiveStartAt}
+            startAt={effectiveStartAt}
+            intro={gameStart.replay as MarbleTiltIntroData}
             players={gameStart.players}
             myPlayerToken={myToken}
           />
@@ -288,7 +303,11 @@ export default function RoomClient({
         <Countdown startAt={effectiveStartAt} />
       )}
 
-      {showResult && <ResultScreen onReplay={skipResultGate ? undefined : handleReplay} />}
+      {showResult && (
+        <ResultScreen
+          onReplay={skipResultGate || isMarbleTiltGame ? undefined : handleReplay}
+        />
+      )}
 
       {showResultPrompt && (
         <button

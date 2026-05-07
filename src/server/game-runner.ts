@@ -1,6 +1,7 @@
 import type { GameId, Player, ReplayPayload } from './rooms';
 import { marbleServer } from '../games/marble/server';
 import { marbleCheerServer } from '../games/marble-cheer/server';
+import { marbleTiltServer } from '../games/marble-tilt/server';
 import { reactionServer } from '../games/reaction/server';
 import { triviaServer } from '../games/trivia/server';
 import type { GameIntroTimings, GameServerModule, TriviaPerPlayerAnswers } from '../games/types';
@@ -9,6 +10,10 @@ import { GAME_META } from '../games/types';
 const REGISTRY: Record<GameId, GameServerModule | null> = {
   marble: marbleServer,
   'marble-cheer': marbleCheerServer,
+  // marble-tilt's runner is invoked directly from socket.ts (live mode), but it
+  // still appears in the registry so REGISTRY[gameId] never returns null for an
+  // enabled game and the GameId map type stays exhaustive.
+  'marble-tilt': marbleTiltServer,
   slot: null,
   elimination: null,
   reaction: reactionServer,

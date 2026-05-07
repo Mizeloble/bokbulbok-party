@@ -79,6 +79,41 @@ export type TriviaReschedulePayload = {
 export type ChargeStartPayload = { endsAt: number };
 export type ChargeStatePayload = { totals: Record<string, number>; cap: number };
 
+/**
+ * Live tick from the marble-tilt server-authoritative simulation. Unlike the
+ * deterministic precompute path used by `marble`/`marble-cheer`, marble-tilt
+ * streams positions ~30 Hz so player tilt input can affect the race in real time.
+ * `t` is the server tick index, useful for late-frame ordering / interpolation
+ * gates. `finished` indices crossed the goal during this tick (one-shot fanfare
+ * trigger). `done: true` signals the last tick — no more positions will arrive.
+ */
+export type MarbleTiltTickPayload = {
+  t: number;
+  positions: number[]; // [x0,y0,x1,y1,...] in box2d meters, rounded to .01
+  finished?: number[]; // marble indices (matching playerOrder) that crossed goal this tick
+  /** Marble indices whose owner triggered a boost during this tick — clients
+   *  use these for one-shot visual effects (white flash + burst). */
+  boosted?: number[];
+  done?: boolean;
+};
+
+/**
+ * Lite intro payload sent on `game:start` for marble-tilt rounds. Unlike the
+ * marble payload (which carries the full pre-computed `frames`), this only
+ * carries the static stage data needed to render the world; live positions
+ * arrive via `marble:tick`.
+ */
+export type MarbleTiltIntro = {
+  /** Static + kinematic entities to draw. Same shape as `SimulationResult.entities`. */
+  entities: unknown;
+  /** playerToken order matching marble indices. */
+  playerOrder: string[];
+  /** box2d coordinate range for camera sizing. */
+  bounds: { minX: number; maxX: number; minY: number; maxY: number };
+  goalY: number;
+  zoomY: number;
+};
+
 export type ErrorPayload = { code: string; message: string };
 
 export type JoinAck =
@@ -104,6 +139,7 @@ export type ServerToClientEvents = {
   'game:result': (payload: ResultPayload) => void;
   'trivia:standings': (payload: TriviaStandingsPayload) => void;
   'trivia:reschedule': (payload: TriviaReschedulePayload) => void;
+  'marble:tick': (payload: MarbleTiltTickPayload) => void;
 };
 
 export type ClientToServerEvents = {
@@ -121,6 +157,10 @@ export type ClientToServerEvents = {
   'reaction:tap': () => void;
   /** Trivia game: answer for the currently open question. Server uses arrival time, not client timestamps. */
   'trivia:answer': (payload: { qIndex: number; choice: 0 | 1 | 2 | 3 }) => void;
+  /** Marble-tilt: client streams normalized X-axis tilt (-1..1) at ~20 Hz while playing. */
+  'marble:tilt': (payload: { x: number }) => void;
+  /** Marble-tilt: instant boost (tap). Server enforces per-round budget + cooldown. */
+  'marble:boost': () => void;
   'host:addPlayer': (
     payload: { nickname: string },
     ack: (res: AddPlayerAck) => void,

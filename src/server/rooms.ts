@@ -3,6 +3,7 @@ import { ko } from '../lib/i18n';
 import { MARBLE_COLORS, ROOM } from '../lib/constants';
 import type { RoomStatus } from '../lib/protocol';
 import type { GameId } from '../games/types';
+import type { MarbleTiltLiveSim } from '../games/marble-tilt/liveSim';
 
 export type { GameId, RoomStatus };
 
@@ -49,6 +50,13 @@ export type ReactionState = {
 
 export type TriviaAnswerRecord = { choice: 0 | 1 | 2 | 3; atOffsetMs: number };
 
+export type MarbleTiltState = {
+  /** Live simulation owning the box2d world. Disposed via `clearMarbleTilt`. */
+  sim: MarbleTiltLiveSim;
+  /** Wall-clock when this round was scheduled to begin (also the `currentRound.startAt`). */
+  startAt: number;
+};
+
 export type TriviaState = {
   /** Wall-clock when each question becomes interactive. */
   openAts: number[];
@@ -81,6 +89,7 @@ export type RoomState = {
   charge?: ChargeState; // present only while status === 'charging'
   reaction?: ReactionState; // present only during a `reaction` round (countdown + playing)
   trivia?: TriviaState; // present only during a `trivia` round (countdown + playing)
+  marbleTilt?: MarbleTiltState; // present only during a `marble-tilt` round
   lastActivityAt: number;
   cleanupTimer?: NodeJS.Timeout;
 };
@@ -103,6 +112,12 @@ export function clearTrivia(room: RoomState) {
   clearTimeout(room.trivia.finishTimer);
   for (const t of room.trivia.standingsTimers) clearTimeout(t);
   room.trivia = undefined;
+}
+
+export function clearMarbleTilt(room: RoomState) {
+  if (!room.marbleTilt) return;
+  room.marbleTilt.sim.dispose();
+  room.marbleTilt = undefined;
 }
 
 // IMPORTANT: Next.js API routes (Turbopack-bundled) and the Socket.IO handler (loaded by tsx)
