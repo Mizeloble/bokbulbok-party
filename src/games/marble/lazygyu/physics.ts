@@ -195,6 +195,23 @@ export class Box2dPhysics {
     }
   }
 
+  // Used by the live tilt mode (`marble-tilt`) to apply a per-tick force vector
+  // derived from device orientation. Pure marble (deterministic precompute) does
+  // not call this — keeping it out of `step()` means determinism is preserved.
+  applyForceToMarble(id: number, fx: number, fy: number): void {
+    const body = this.marbleMap[id];
+    if (!body) return;
+    body.ApplyForceToCenter(new this.Box2D.b2Vec2(fx, fy), true);
+  }
+
+  // Used by marble-tilt's boost (tap) mechanic to give a marble an instantaneous
+  // velocity kick. Force is integrated over time; impulse changes velocity in one shot.
+  applyImpulseToMarble(id: number, ix: number, iy: number): void {
+    const body = this.marbleMap[id];
+    if (!body) return;
+    body.ApplyLinearImpulseToCenter(new this.Box2D.b2Vec2(ix, iy), true);
+  }
+
   hasMarble(id: number): boolean {
     return id in this.marbleMap;
   }

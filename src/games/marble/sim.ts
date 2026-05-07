@@ -45,19 +45,21 @@ const STEPS_PER_FRAME = 2; // 240 / 120 = 2 substeps per recorded frame
 const MAX_SECONDS = 60;
 const MAX_FRAMES = MAX_SECONDS * FPS;
 
-export async function simulateRace(
-  seed: number,
+/**
+ * Spawn marbles into a pre-initialized physics world. Shared by `simulateRace`
+ * (deterministic precompute) and `marble-tilt`'s live runner. RNG call count
+ * and order MUST stay identical across both entry points so seed reproducibility
+ * is preserved for marble/marble-cheer.
+ *
+ * Returns the per-player ratio array (same order as `players`) for callers that
+ * need to expose `chargeRatios` to the renderer.
+ */
+export function spawnMarbles(
+  physics: Box2dPhysics,
   players: { playerToken: string }[],
+  rng: () => number,
   chargeRatios?: Record<string, number>,
-): Promise<SimulationResult> {
-  const rng = mulberry32(seed);
-
-  const physics = new Box2dPhysics(rng);
-  await physics.init();
-
-  const stage = stages[0];
-  physics.createStage(stage);
-
+): number[] {
   // Marble spawn — line/slot grid ported from lazygyu/src/marble.ts:72, but slots
   // within each line are now picked randomly (seeded) instead of filled left-to-right,
   // so each round looks visibly different. With ≤10 players in line 0, this means
@@ -89,7 +91,6 @@ export async function simulateRace(
     [positions[k], positions[j]] = [positions[j], positions[k]];
   }
 
-  // Per-player ratio array, ordered to match `players` (and thus `playerOrder`).
   const ratios: number[] = new Array(players.length).fill(0);
   for (let i = 0; i < players.length; i++) {
     const { line, slotInLine } = positions[i];
@@ -104,6 +105,23 @@ export async function simulateRace(
     const y = baseY + 5.0 * ratio;
     physics.createMarble(i, x, y, ratio);
   }
+  return ratios;
+}
+
+export async function simulateRace(
+  seed: number,
+  players: { playerToken: string }[],
+  chargeRatios?: Record<string, number>,
+): Promise<SimulationResult> {
+  const rng = mulberry32(seed);
+
+  const physics = new Box2dPhysics(rng);
+  await physics.init();
+
+  const stage = stages[0];
+  physics.createStage(stage);
+
+  const ratios = spawnMarbles(physics, players, rng, chargeRatios);
 
   physics.start();
 

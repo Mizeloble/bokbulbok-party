@@ -60,6 +60,17 @@ export const GAME_META = {
     needsPreCharge: true,
     enabled: true,
   },
+  'marble-tilt': {
+    emoji: '📱',
+    estimatedSeconds: 35,
+    // Live device-orientation input streamed during play. The runner is bespoke
+    // (lives in src/games/marble-tilt/liveSim.ts and is invoked directly from
+    // socket.ts), not the standard `computeResult`-based reaction/trivia flow,
+    // so this flag is informational rather than routed through prepareIntro.
+    needsClientInput: true,
+    needsPreCharge: false,
+    enabled: true,
+  },
   slot: {
     emoji: '🎰',
     estimatedSeconds: 8,

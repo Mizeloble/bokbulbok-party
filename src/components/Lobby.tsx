@@ -7,6 +7,7 @@ import { GamePicker } from './GamePicker';
 import { GameIntro } from './GameIntro';
 import { HistorySection } from './HistorySection';
 import { InviteSheet } from './InviteSheet';
+import { TiltPermissionGate } from '@/games/marble-tilt/TiltPermissionGate';
 import { getSocket } from '@/lib/socket-client';
 import type { GameId } from '@/games/types';
 import clsx from 'clsx';
@@ -118,6 +119,7 @@ export function Lobby({ inviteUrl, onChangeNickname }: { inviteUrl: string; onCh
               <Eyebrow>{ko.lobby.chooseGame}</Eyebrow>
               <GamePicker selected={state.gameId} onSelect={setGameId} />
               <GameIntro gameId={state.gameId} />
+              {state.gameId === 'marble-tilt' && <TiltPermissionGate isHost />}
             </div>
 
             <div>
@@ -150,6 +152,7 @@ export function Lobby({ inviteUrl, onChangeNickname }: { inviteUrl: string; onCh
               {ko.lobby.waitingHostPicking}
             </div>
             <GameIntro gameId={state.gameId} />
+            {state.gameId === 'marble-tilt' && <TiltPermissionGate isHost={false} />}
           </div>
         )}
 
