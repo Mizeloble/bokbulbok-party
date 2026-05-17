@@ -1,6 +1,12 @@
 # 복불복 🎯
 
 > **Made by [Mizeloble](https://github.com/Mizeloble)** · MIT License
+>
+> *Mobile party game where a group decides who takes the penalty via a quick minigame — open a room by QR, play one round, last place loses.*
+
+![복불복 데모 — 카운트다운 · 마블 레이스 · 꼴찌 결정](docs/demo.gif)
+
+> 데모 GIF 갱신: 로컬 dev 서버 기동 후 `node scripts/capture-demo.mjs` → `/tmp/bbb-frames` 프레임을 ffmpeg로 `docs/demo.gif` 합성
 
 여럿(4~12명, 최대 30명)이 폰으로 모여 **누가 벌칙을 받을지** 미니게임으로 정하는 복불복 멀티플레이 웹앱.
 
