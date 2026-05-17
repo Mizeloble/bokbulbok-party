@@ -161,7 +161,7 @@ export function ResultScreen({ onReplay }: { onReplay?: () => void } = {}) {
       <div className="relative z-10 w-full max-w-sm flex flex-col items-center">
         {/* Header chip — 🎯 오늘의 벌칙 × N명 */}
         <div className="inline-flex items-center gap-2 pl-3.5 pr-3 py-1.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-xs text-zinc-400 font-semibold whitespace-nowrap">
-          <span className="text-sm">☕️</span>
+          <span className="text-sm">🎯</span>
           <span>{ko.result.headerChip}</span>
           <span className="px-2 py-0.5 rounded-full bg-amber-400 text-zinc-900 font-extrabold text-xs">
             {ko.result.countBadge(losers.length)}

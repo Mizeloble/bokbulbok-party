@@ -1,6 +1,6 @@
 'use client';
 
-const KEY = 'coffee:identity';
+const KEY = 'bbk:identity';
 
 export type StoredIdentity = {
   nickname: string;

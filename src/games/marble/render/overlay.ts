@@ -213,7 +213,7 @@ export function drawLoserBanner(
   const alpha = Math.min(1, animT * 2);
   const breathe = 1 + 0.025 * Math.sin(nowMs * 0.005);
 
-  // Width = measure nickname + coffee icon + comfortable padding, capped to viewport.
+  // Width = measure nickname + penalty icon + comfortable padding, capped to viewport.
   const cx = W / 2;
   const cy = H * 0.6 + slideY;
   const bannerH = 138 * dpr;
@@ -227,7 +227,7 @@ export function drawLoserBanner(
 
   // Compute width based on text content
   ctx.font = `bold ${44 * dpr}px sans-serif`;
-  const nickW = ctx.measureText(`☕ ${loserNick}`).width;
+  const nickW = ctx.measureText(`🎯 ${loserNick}`).width;
   const bannerW = Math.min(W * 0.92, Math.max(360 * dpr, nickW + 96 * dpr));
   const left = cx - bannerW / 2;
   const top = cy - bannerH / 2;
@@ -273,15 +273,15 @@ export function drawLoserBanner(
   ctx.textBaseline = 'middle';
   ctx.fillText(badgeText, cx, badgeY + badgeH / 2 + 1 * dpr);
 
-  // Main line: ☕ + nickname, big & bold with dark outline for punch
+  // Main line: 🎯 + nickname, big & bold with dark outline for punch
   ctx.font = `bold ${44 * dpr}px sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.lineWidth = 5 * dpr;
   ctx.strokeStyle = 'rgba(0,0,0,0.45)';
-  ctx.strokeText(`☕ ${loserNick}`, cx, cy - 4 * dpr);
+  ctx.strokeText(`🎯 ${loserNick}`, cx, cy - 4 * dpr);
   ctx.fillStyle = '#fff';
-  ctx.fillText(`☕ ${loserNick}`, cx, cy - 4 * dpr);
+  ctx.fillText(`🎯 ${loserNick}`, cx, cy - 4 * dpr);
 
   // Subtitle
   ctx.font = `${16 * dpr}px sans-serif`;

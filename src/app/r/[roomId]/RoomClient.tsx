@@ -334,7 +334,7 @@ export default function RoomClient({
 function readHostToken(roomId: string): string | undefined {
   if (typeof window === 'undefined') return undefined;
   try {
-    return window.sessionStorage.getItem(`coffee:host:${roomId}`) ?? undefined;
+    return window.sessionStorage.getItem(`bbk:host:${roomId}`) ?? undefined;
   } catch {
     return undefined;
   }

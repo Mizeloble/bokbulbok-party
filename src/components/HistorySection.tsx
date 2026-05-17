@@ -69,7 +69,7 @@ export function HistorySection({ canReset, refreshKey }: { canReset: boolean; re
           onClick={() => setOpen((s) => !s)}
           className="text-xs text-zinc-400 font-bold uppercase tracking-[0.05em] inline-flex items-center gap-1.5 active:scale-[0.98]"
         >
-          <span>☕ {ko.history.sectionTitle}</span>
+          <span>🎯 {ko.history.sectionTitle}</span>
           <span
             className={clsx(
               'text-zinc-600 transition-transform text-[10px]',

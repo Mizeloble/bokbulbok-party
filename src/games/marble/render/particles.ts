@@ -22,8 +22,8 @@ export function spawnFinishBurst(pool: Particle[], x: number, y: number, color: 
       vrot: (Math.random() - 0.5) * 14,
     });
   }
-  // Emoji rain — coffee, money flying, laughing emojis. Sparse but big.
-  const emojis = ['☕', '💸', '😂', '🎉', '✨', '☕', '☕'];
+  // Emoji rain — penalty target, money flying, laughing emojis. Sparse but big.
+  const emojis = ['🎯', '💸', '😂', '🎉', '✨', '🎯', '🎯'];
   const emojiCount = Math.floor(28 * intensity);
   for (let i = 0; i < emojiCount; i++) {
     const a = Math.random() * Math.PI * 2;

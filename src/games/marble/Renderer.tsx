@@ -101,7 +101,7 @@ export function MarbleRenderer({ startAt, durationMs, replay, players, myPlayerT
     let firedMyFinishHaptic = false;
     let firedLoserHaptic = false;
 
-    // Loser = the very last entry in finishOrder. That's the player who pays for coffee.
+    // Loser = the very last entry in finishOrder. That's the player who gets the penalty.
     const loserToken = replay.finishOrder[replay.finishOrder.length - 1];
     const loserIdx = loserToken ? replay.playerOrder.indexOf(loserToken) : -1;
     // Second-to-last finisher: their crossing locks in the loser. That's the climactic
@@ -188,7 +188,7 @@ export function MarbleRenderer({ startAt, durationMs, replay, players, myPlayerT
       // Fanfare fires when the SECOND-TO-LAST finisher crosses — that's the moment
       // the loser is mathematically locked in. Three staggered bursts (0s, 0.25s, 0.55s
       // after) layered with confetti + emoji rain, pointing the camera/eye straight at
-      // "you owe coffee".
+      // "you got the penalty".
       const burstFrame1 = loserDecidedFrame;
       const burstFrame2 = loserDecidedFrame + Math.floor(fps * 0.25);
       const burstFrame3 = loserDecidedFrame + Math.floor(fps * 0.55);

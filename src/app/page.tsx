@@ -17,7 +17,7 @@ export default function LandingPage() {
       if (!res.ok) throw new Error('failed');
       const { roomId, hostToken } = (await res.json()) as { roomId: string; hostToken: string };
       try {
-        sessionStorage.setItem(`coffee:host:${roomId}`, hostToken);
+        sessionStorage.setItem(`bbk:host:${roomId}`, hostToken);
       } catch {}
       router.push(`/r/${roomId}`);
     } catch {

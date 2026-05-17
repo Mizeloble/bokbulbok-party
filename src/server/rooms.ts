@@ -123,7 +123,7 @@ export function clearMarbleTilt(room: RoomState) {
 // IMPORTANT: Next.js API routes (Turbopack-bundled) and the Socket.IO handler (loaded by tsx)
 // run in different module instances, so a plain `new Map()` here would split into two stores
 // (one used by `POST /api/rooms`, another by socket join). Pin to globalThis to share.
-const ROOMS_KEY = '__lunchCoffeeRooms';
+const ROOMS_KEY = '__bokbulbokRooms';
 type GlobalWithRooms = typeof globalThis & { [ROOMS_KEY]?: Map<string, RoomState> };
 const g = globalThis as GlobalWithRooms;
 const rooms: Map<string, RoomState> = g[ROOMS_KEY] ?? new Map<string, RoomState>();

@@ -45,7 +45,7 @@ export type ResultPayload = {
   losers: string[];
   /**
    * Cumulative loss counts (after this game) for each loser, keyed by playerToken.
-   * Powers the "N회째 ☕" badge on the result screen. Optional — clients tolerate absence.
+   * Powers the "N회째 🎯" badge on the result screen. Optional — clients tolerate absence.
    */
   history?: { lossCount: Record<string, number> };
 };
