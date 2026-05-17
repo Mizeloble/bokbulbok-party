@@ -10,18 +10,18 @@ export const ROOM = {
   IDLE_REDIRECT_MS: 3 * 60_000,
   /**
    * Global cap on concurrent in-memory rooms (single Fly shared-cpu-1x / 512MB,
-   * no autoscale). Deliberately set BELOW the realistic connection/CPU ceiling so
-   * a surge degrades gracefully — `POST /api/rooms` returns 503 and the client
-   * shows a "잠시 후 다시" notice — instead of the box thrashing (many concurrent
-   * box2d sims on 1 shared vCPU) or Fly's edge refusing raw connections.
+   * no autoscale). This is a CAPACITY / OOM / abuse guard so the box degrades
+   * gracefully (`POST /api/rooms` → 503, client shows a "잠시 후 다시" notice)
+   * instead of thrashing many concurrent box2d sims on one shared vCPU.
    *
-   * Sizing: Fly `http_service` hard_limit is 200 connections; rooms average
-   * well under 30 players, so ~40 rooms keeps realistic concurrent load under
-   * that ceiling with headroom for Node/Next/box2d. Also an OOM/abuse guard
-   * against unbounded room creation — NOT a per-IP rate limit. Bump only
-   * together with VM size / connection limits.
+   * NOTE: this does NOT bound hosting cost. Fly bills machine *started-seconds*,
+   * not room count — cost ≈ how long the VM stays awake (sporadic all-day
+   * traffic + auto-stop cooldown can keep it up most of the workday). Cost
+   * levers are VM size / uptime, not this number. Kept small (10) on purpose:
+   * an internal tool serving a handful of simultaneous rooms; raise only with
+   * VM size + Fly `http_service` connection limits.
    */
-  MAX_ROOMS: 40,
+  MAX_ROOMS: 10,
 } as const;
 
 export const GAME = {
