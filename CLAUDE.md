@@ -1,6 +1,6 @@
-# 점심 커피내기 (ax-lunch-coffee)
+# 복불복 (bokbulbok-party)
 
-목적: 점심 동료 4~12명이 폰으로 함께 즐기는 커피값 정하기 게임. 호스트가 QR로 방을 열고 참가자들이 스캔해서 입장.
+목적: 4~12명(최대 30명)이 폰으로 함께 즐기는 범용 복불복 벌칙 정하기 파티 게임. 호스트가 QR로 방을 열고 참가자들이 스캔해서 입장. 오픈소스(MIT), 공개 서비스.
 
 ## 실행
 - 개발: `npm run dev` (http://localhost:3000, Socket.IO 동일 포트)
@@ -9,6 +9,9 @@
 
 ## 아키텍처 한줄 요약
 Next.js 16(App Router) + 커스텀 Node 서버(`server.ts`) + Socket.IO. 방·플레이어는 서버 메모리에만, DB 없음. 게임 결과는 서버가 권위적으로 결정 → 리플레이 트랙 형태로 브로드캐스트 → 모든 클라가 동일 wall-clock에 재생.
+
+## 공개 운영
+단일 인스턴스 전제. 무한 방 생성 OOM 가드로 전역 동시 방 수 상한(`ROOM.MAX_ROOMS`, `src/lib/constants.ts`)만 둠 — `createRoom`이 `RoomCapacityError` throw, `POST /api/rooms`가 503. 레이트리밋·캡차는 미도입(트래픽 관찰 후 결정).
 
 ## 한국어 UI 원칙
 - 모든 사용자 가시 문자열은 `src/lib/i18n.ts`에서만. 인라인 한국어 금지.

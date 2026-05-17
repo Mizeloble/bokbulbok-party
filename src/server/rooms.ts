@@ -129,7 +129,17 @@ const g = globalThis as GlobalWithRooms;
 const rooms: Map<string, RoomState> = g[ROOMS_KEY] ?? new Map<string, RoomState>();
 g[ROOMS_KEY] = rooms;
 
+/** Thrown by `createRoom` when the global concurrent-room cap is reached. */
+export class RoomCapacityError extends Error {
+  constructor() {
+    super('room capacity reached');
+    this.name = 'RoomCapacityError';
+  }
+}
+
 export function createRoom(): { roomId: string; hostToken: string } {
+  // OOM guard: refuse new rooms past the global cap (abuse / runaway creation).
+  if (rooms.size >= ROOM.MAX_ROOMS) throw new RoomCapacityError();
   // Avoid collisions
   let id = newRoomId();
   while (rooms.has(id)) id = newRoomId();

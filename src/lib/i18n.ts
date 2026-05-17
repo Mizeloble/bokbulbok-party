@@ -1,13 +1,14 @@
 export const ko = {
   app: {
-    title: '점심 커피내기',
-    subtitle: 'AX 전략그룹 동료들과 같이, 폰으로',
-    metaDescription: '폰으로 같이 하는 커피내기 게임',
+    title: '복불복',
+    subtitle: '여럿이 모여, 폰으로',
+    metaDescription: '폰으로 같이 하는 벌칙 정하기 게임',
+    madeBy: '제작 Mizeloble',
   },
   landing: {
     createRoom: '방 만들기',
     creating: '생성 중…',
-    description: 'QR을 찍어 모인 사람들끼리 게임으로 커피값 정해요',
+    description: 'QR을 찍어 모인 사람들끼리 게임으로 벌칙 정해요',
     createFailed: '방 생성에 실패했어요. 다시 시도해주세요.',
   },
   lobby: {
@@ -23,7 +24,7 @@ export const ko = {
     share: '공유하기',
     linkCopied: '링크가 복사되었어요',
     chooseGame: '게임 선택',
-    loserCount: '커피값 낼 사람 수',
+    loserCount: '벌칙 받을 사람 수',
     loserCountUnit: (n: number) => `${n}명`,
     start: '시작',
     needMorePlayers: '2명 이상 모이면 시작할 수 있어요',
@@ -34,7 +35,7 @@ export const ko = {
     cancel: '취소',
     roomBadge: (id: string, isHost: boolean) => `방 ${id}${isHost ? ' · 호스트' : ''}`,
     addManualTitle: '직접 추가',
-    addManualHint: '폰 없는 동료를 호스트가 대신 등록',
+    addManualHint: '폰 없는 사람을 호스트가 대신 등록',
     addManualPlaceholder: '닉네임 입력',
     addManualSubmit: '추가',
     removeManualAria: (name: string) => `${name} 제거`,
@@ -60,25 +61,25 @@ export const ko = {
     countdownPreSub: '곧 시작',
     inProgress: '이미 게임 진행 중이에요',
     myRankFirst: '🥇 1등 골인!',
-    myRankLast: '☕ 오늘은 내가 산다!',
+    myRankLast: '🎯 오늘은 내가 벌칙!',
     myRankMid: (rank: number) => `${rank}등 골인!`,
     myRankSubFirst: '운 좋게 면제!',
-    myRankSubLast: '커피값 결정 ☕',
+    myRankSubLast: '벌칙 당첨 🎯',
     myRankSubMid: (total: number) => `총 ${total}명 중`,
     loserRevealed: (name: string) => name,
     loserRevealedBadge: '꼴찌 결정!',
-    loserRevealedSub: '오늘 커피는 당신이!',
+    loserRevealedSub: '오늘 벌칙은 당신!',
   },
   result: {
-    losers: (n: number) => `오늘 커피는 ${n}명이!`,
-    headerChip: '오늘 커피값',
+    losers: (n: number) => `오늘 벌칙은 ${n}명!`,
+    headerChip: '오늘의 벌칙',
     countBadge: (n: number) => `× ${n}명`,
     loserBadge: '패자',
     again: '다시 하기',
     changeGame: '게임 바꾸기',
     closeRoom: '방 닫기',
     leaveRoom: '방 나가기',
-    youLost: '오늘은 내가 산다 ☕',
+    youLost: '오늘은 내가 벌칙 🎯',
     youWon: '운 좋게 면제!',
     tapToContinue: '결과 보기',
     fullRanking: '전체 순위',
@@ -106,7 +107,7 @@ export const ko = {
     notManual: '직접 추가한 참가자만 제거할 수 있어요',
   },
   invite: {
-    shareText: '같이 커피내기 하실래요?',
+    shareText: '같이 벌칙 정하기 하실래요?',
     close: '닫기',
     copied: '복사됨 ✓',
   },
@@ -127,14 +128,14 @@ export const ko = {
   gameIntros: {
     marble: [
       '핀이 빼곡한 트랙을 따라 구슬들이 굴러 내려가요',
-      '꼴찌 N명이 커피값을 내요',
+      '꼴찌 N명이 벌칙을 받아요',
       '결과는 운만 — 가만히 응원만 해요',
     ],
     'marble-cheer': [
       '시작 전 5초간 화면을 미친듯이 탭하면 충전돼요',
       '응원 받은 구슬은 더 앞에서 출발해요',
       '작고 무거워져서 핀 사이를 잘 빠져나가요',
-      '꼴찌 N명이 커피값을 내요',
+      '꼴찌 N명이 벌칙을 받아요',
     ],
     slot: [
       '이름들이 슬롯처럼 다다닥 돌다 멈춰요',
@@ -146,20 +147,20 @@ export const ko = {
     ],
     reaction: [
       '"지금!" 신호가 뜨면 가장 빨리 탭',
-      '느린 N명이 커피값',
+      '느린 N명이 벌칙',
       '미리 누르면 가장 일찍 누른 순서로 꼴등',
     ],
     trivia: [
       '4지선다 5문제',
       '빠르게 맞힐수록 점수↑ · 연속 정답 콤보 보너스',
       '마지막 문제는 점수 2배 — 끝까지 역전 가능',
-      '점수 낮은 N명이 커피값',
+      '점수 낮은 N명이 벌칙',
     ],
     'marble-tilt': [
       '폰을 좌우로 기울이면 내 구슬에 힘이 가해져요',
       '오른쪽 아래 부스트 버튼을 탭하면 골 방향으로 한 번에 튀어나가요 (3회)',
       '안드로이드는 자동, 아이폰은 권한 허용 한 번만',
-      '꼴찌 N명이 커피값을 내요',
+      '꼴찌 N명이 벌칙을 받아요',
     ],
   },
   charge: {
@@ -173,11 +174,11 @@ export const ko = {
     starting: '시작!',
   },
   marble: {
-    paneLoserView: '☕ 꼴찌 시점',
-    paneFinishedLoserView: '✓ 도착 · ☕ 꼴찌 시점',
+    paneLoserView: '🎯 꼴찌 시점',
+    paneFinishedLoserView: '✓ 도착 · 🎯 꼴찌 시점',
     paneRiskCandidate: '⚠️ 위험! 꼴찌 후보',
     paneMyView: '👁 내 시점',
-    loserExclamation: '☕ 꼴찌!',
+    loserExclamation: '🎯 꼴찌!',
     loserConfirmedBadge: '꼴찌 결정!',
   },
   marbleTilt: {
@@ -250,15 +251,15 @@ export const ko = {
   },
   history: {
     // 결과 화면 패자 옆 작은 칩. 1회째는 표시하지 않음(노이즈 감소).
-    loserBadge: (n: number) => `${n}회째 ☕`,
+    loserBadge: (n: number) => `${n}회째 🎯`,
 
     // 로비 섹션
-    sectionTitle: '역대 커피값',
+    sectionTitle: '역대 벌칙',
     sectionToggleHide: '접기',
     sectionToggleShow: '펼치기',
     empty: '아직 기록이 없어요. 한 판 돌리면 여기 쌓여요.',
     loadFailed: '히스토리를 불러오지 못했어요',
-    rowLosses: (n: number) => `${n}회 사줌`,
+    rowLosses: (n: number) => `${n}회 당첨`,
     rowPlays: (n: number) => `${n}판`,
     medal: (rank: number) => (rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`),
 
@@ -274,11 +275,11 @@ export const ko = {
     botNames: ['봇1', '봇2', '봇3', '봇4', '봇5'] as const,
   },
   credit: {
-    org: 'AX 전략그룹',
-    authorHandle: 'jjmize.kim@samsung.com',
-    authorUrl: 'mailto:jjmize.kim@samsung.com',
+    org: '복불복',
+    authorHandle: 'Mizeloble',
+    authorUrl: 'https://github.com/Mizeloble',
     repoLabel: 'GitHub',
-    repoUrl: 'https://github.com/Mizeloble/ax-lunch-coffee/',
+    repoUrl: 'https://github.com/Mizeloble/bokbulbok-party/',
     version: (v: string) => `v${v}`,
   },
 } as const;

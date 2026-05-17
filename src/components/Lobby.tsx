@@ -77,8 +77,17 @@ export function Lobby({ inviteUrl, onChangeNickname }: { inviteUrl: string; onCh
       <header className="px-4 pt-4 pb-2 flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="font-bold text-base truncate -tracking-wide">{ko.app.title}</div>
-          <div className="text-zinc-500 text-xs mt-0.5">
-            {ko.lobby.roomBadge(state.id, isHost)}
+          <div className="text-zinc-500 text-xs mt-0.5 flex items-center gap-1.5">
+            <span>{ko.lobby.roomBadge(state.id, isHost)}</span>
+            <span aria-hidden>·</span>
+            <a
+              href={ko.credit.authorUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="underline-offset-2 hover:underline hover:text-zinc-300"
+            >
+              {ko.app.madeBy}
+            </a>
           </div>
         </div>
         <button

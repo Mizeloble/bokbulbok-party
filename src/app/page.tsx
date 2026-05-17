@@ -31,9 +31,17 @@ export default function LandingPage() {
       <div className="flex-1 flex items-center justify-center">
         <div className="max-w-sm w-full space-y-10">
           <div className="space-y-2">
-            <div className="text-6xl">☕️</div>
+            <div className="text-6xl">🎯</div>
             <h1 className="text-3xl font-bold">{ko.app.title}</h1>
             <p className="text-zinc-400 text-sm">{ko.app.subtitle}</p>
+            <a
+              href={ko.credit.authorUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="inline-block text-xs text-zinc-500 underline-offset-2 hover:underline hover:text-zinc-300"
+            >
+              {ko.app.madeBy}
+            </a>
           </div>
           <p className="text-zinc-300 text-sm leading-relaxed">{ko.landing.description}</p>
           <button

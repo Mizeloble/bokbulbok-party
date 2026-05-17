@@ -1,7 +1,15 @@
 {
-  "name": "ax-lunch-coffee",
-  "version": "1.6.0",
-  "private": true,
+  "name": "bokbulbok-party",
+  "version": "2.0.0",
+  "private": false,
+  "license": "MIT",
+  "author": "Mizeloble (https://github.com/Mizeloble)",
+  "description": "여럿이 모여 폰으로 즐기는 복불복 벌칙 정하기 파티 게임 — QR로 방을 열고 미니게임으로 누가 벌칙을 받을지 정해요.",
+  "homepage": "https://github.com/Mizeloble/bokbulbok-party",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mizeloble/bokbulbok-party.git"
+  },
   "scripts": {
     "dev": "tsx server.ts",
     "build": "next build",

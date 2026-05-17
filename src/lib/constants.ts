@@ -8,6 +8,13 @@ export const ROOM = {
   RECONNECT_GRACE_MS: 10_000,
   /** Auto-redirect a stuck `result`-screen tab back to landing after this idle window. */
   IDLE_REDIRECT_MS: 3 * 60_000,
+  /**
+   * Global cap on concurrent in-memory rooms. The single Fly instance has 512MB;
+   * an active room with up to 30 players costs roughly ~1MB, so 300 leaves a
+   * safety margin (plus headroom for Node/Next/box2d). This is an OOM guard
+   * against unbounded `POST /api/rooms` abuse — NOT a per-IP rate limit.
+   */
+  MAX_ROOMS: 300,
 } as const;
 
 export const GAME = {
