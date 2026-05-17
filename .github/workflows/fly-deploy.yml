@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     concurrency: deploy-group    # optional: ensure only one action runs at a time
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: superfly/flyctl-actions/setup-flyctl@master
       # --ha=false: 메모리 전용 단일 인스턴스 전제. 0대→재생성 시에도 1대만 띄움.
       # 크레딧 식별자는 repo secret에서 build-arg로 주입 (소스에 사내 정보 미커밋).
