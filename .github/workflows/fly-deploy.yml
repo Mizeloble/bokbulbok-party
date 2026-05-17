@@ -14,6 +14,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
       # --ha=false: 메모리 전용 단일 인스턴스 전제. 0대→재생성 시에도 1대만 띄움.
-      - run: flyctl deploy --remote-only --yes --ha=false
+      # 크레딧 식별자는 repo secret에서 build-arg로 주입 (소스에 사내 정보 미커밋).
+      - run: >
+          flyctl deploy --remote-only --yes --ha=false
+          --build-arg NEXT_PUBLIC_CREDIT_ORG="${{ secrets.CREDIT_ORG }}"
+          --build-arg NEXT_PUBLIC_CREDIT_AUTHOR="${{ secrets.CREDIT_AUTHOR }}"
+          --build-arg NEXT_PUBLIC_CREDIT_AUTHOR_URL="${{ secrets.CREDIT_AUTHOR_URL }}"
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

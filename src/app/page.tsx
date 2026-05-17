@@ -34,14 +34,18 @@ export default function LandingPage() {
             <div className="text-6xl">🎯</div>
             <h1 className="text-3xl font-bold">{ko.app.title}</h1>
             <p className="text-zinc-400 text-sm">{ko.app.subtitle}</p>
-            <a
-              href={ko.credit.authorUrl}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="inline-block text-xs text-zinc-500 underline-offset-2 hover:underline hover:text-zinc-300"
-            >
-              {ko.app.madeBy}
-            </a>
+            {ko.credit.authorUrl ? (
+              <a
+                href={ko.credit.authorUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="inline-block text-xs text-zinc-500 underline-offset-2 hover:underline hover:text-zinc-300"
+              >
+                {ko.app.madeBy}
+              </a>
+            ) : (
+              <p className="text-xs text-zinc-500">{ko.app.madeBy}</p>
+            )}
           </div>
           <p className="text-zinc-300 text-sm leading-relaxed">{ko.landing.description}</p>
           <button
@@ -56,12 +60,16 @@ export default function LandingPage() {
       </div>
       <footer className="py-4 pb-[max(env(safe-area-inset-bottom),16px)] text-xs text-zinc-600">
         {ko.credit.org} ·{' '}
-        <a
-          href={ko.credit.authorUrl}
-          className="underline-offset-2 hover:underline hover:text-zinc-400"
-        >
-          {ko.credit.authorHandle}
-        </a>{' '}
+        {ko.credit.authorUrl ? (
+          <a
+            href={ko.credit.authorUrl}
+            className="underline-offset-2 hover:underline hover:text-zinc-400"
+          >
+            {ko.credit.authorHandle}
+          </a>
+        ) : (
+          <span>{ko.credit.authorHandle}</span>
+        )}{' '}
         ·{' '}
         <a
           href={ko.credit.repoUrl}

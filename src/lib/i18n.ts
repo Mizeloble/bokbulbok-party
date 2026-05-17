@@ -1,9 +1,23 @@
+// 크레딧 식별자는 빌드 시 env로 주입 (사내 배포는 NEXT_PUBLIC_CREDIT_*로 덮어씀).
+// 공개 repo 소스에는 일반 fallback만 둠 — 사내 이메일·조직명을 커밋하지 않기 위함.
+const CREDIT_ORG = process.env.NEXT_PUBLIC_CREDIT_ORG || '복불복';
+const CREDIT_AUTHOR_ENV = process.env.NEXT_PUBLIC_CREDIT_AUTHOR;
+const CREDIT_AUTHOR = CREDIT_AUTHOR_ENV || 'Mizeloble';
+const CREDIT_AUTHOR_URL_ENV = process.env.NEXT_PUBLIC_CREDIT_AUTHOR_URL;
+// URL 명시 → 그 링크 / author만 주입(사내) → 링크 없는 텍스트 / 둘 다 미설정(공개) → GitHub.
+const CREDIT_AUTHOR_URL =
+  CREDIT_AUTHOR_URL_ENV
+    ? CREDIT_AUTHOR_URL_ENV
+    : CREDIT_AUTHOR_ENV
+      ? ''
+      : 'https://github.com/Mizeloble';
+
 export const ko = {
   app: {
     title: '복불복',
     subtitle: '여럿이 모여, 폰으로',
     metaDescription: '폰으로 같이 하는 벌칙 정하기 게임',
-    madeBy: '제작 Mizeloble',
+    madeBy: `제작 ${CREDIT_AUTHOR}`,
   },
   landing: {
     createRoom: '방 만들기',
@@ -253,9 +267,9 @@ export const ko = {
     botNames: ['봇1', '봇2', '봇3', '봇4', '봇5'] as const,
   },
   credit: {
-    org: '복불복',
-    authorHandle: 'Mizeloble',
-    authorUrl: 'https://github.com/Mizeloble',
+    org: CREDIT_ORG,
+    authorHandle: CREDIT_AUTHOR,
+    authorUrl: CREDIT_AUTHOR_URL,
     repoLabel: 'GitHub',
     repoUrl: 'https://github.com/Mizeloble/bokbulbok-party/',
     version: (v: string) => `v${v}`,
