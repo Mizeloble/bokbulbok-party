@@ -24,6 +24,7 @@ export const ko = {
     creating: '생성 중…',
     description: 'QR을 찍어 모인 사람들끼리 게임으로 벌칙 정해요',
     createFailed: '방 생성에 실패했어요. 다시 시도해주세요.',
+    busy: '지금 접속이 몰려요. 잠시 후 다시 시도해주세요',
   },
   lobby: {
     waiting: '참가자를 기다리는 중',

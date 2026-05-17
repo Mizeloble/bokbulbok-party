@@ -14,7 +14,12 @@ export default function LandingPage() {
     setBusy(true);
     try {
       const res = await fetch('/api/rooms', { method: 'POST' });
-      if (!res.ok) throw new Error('failed');
+      if (!res.ok) {
+        // 503 = 전역 방 수 상한(혼잡) → 재시도 권유가 아닌 "잠시 후" 안내
+        setBusy(false);
+        alert(res.status === 503 ? ko.landing.busy : ko.landing.createFailed);
+        return;
+      }
       const { roomId, hostToken } = (await res.json()) as { roomId: string; hostToken: string };
       try {
         sessionStorage.setItem(`bbk:host:${roomId}`, hostToken);
