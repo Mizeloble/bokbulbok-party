@@ -4,9 +4,18 @@
 >
 > *Mobile party game where a group decides who takes the penalty via a quick minigame — open a room by QR, play one round, last place loses.*
 
-![복불복 데모 — 카운트다운 · 마블 레이스 · 꼴찌 결정](docs/demo.gif)
+<table>
+  <tr>
+    <td align="center"><b>🏁 마블 레이스</b></td>
+    <td align="center"><b>🧠 일반 상식 퀴즈</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/demo-marble.gif" width="250" alt="마블 레이스 데모 — 카운트다운 · 레이스 · 꼴찌 결정"></td>
+    <td><img src="docs/demo-trivia.gif" width="250" alt="일반 상식 퀴즈 데모 — 4지선다 · 점수·콤보 · 순위"></td>
+  </tr>
+</table>
 
-> 데모 GIF 갱신: 로컬 dev 서버 기동 후 `node scripts/capture-demo.mjs` → `/tmp/bbb-frames` 프레임을 ffmpeg로 `docs/demo.gif` 합성
+> 데모 GIF 갱신: 로컬 dev 서버 기동 후 `node scripts/capture-demo.mjs <marble|trivia>` → `/tmp/bbb-frames-<game>` 프레임을 ffmpeg로 `docs/demo-<game>.gif` 합성
 
 여럿(4~12명, 최대 30명)이 폰으로 모여 **누가 벌칙을 받을지** 미니게임으로 정하는 복불복 멀티플레이 웹앱.
 
