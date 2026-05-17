@@ -5,7 +5,6 @@ import { ko } from '@/lib/i18n';
 import { useRoomStore } from '@/store/room-store';
 import { GamePicker } from './GamePicker';
 import { GameIntro } from './GameIntro';
-import { HistorySection } from './HistorySection';
 import { InviteSheet } from './InviteSheet';
 import { TiltPermissionGate } from '@/games/marble-tilt/TiltPermissionGate';
 import { getSocket } from '@/lib/socket-client';
@@ -284,8 +283,6 @@ export function Lobby({ inviteUrl, onChangeNickname }: { inviteUrl: string; onCh
             </div>
           )}
         </div>
-
-        <HistorySection canReset={isHost} refreshKey={state.id} />
       </section>
 
       {/* sticky bottom CTA (host only) */}

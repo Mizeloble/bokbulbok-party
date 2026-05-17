@@ -249,28 +249,6 @@ export const ko = {
     },
     detailNoOutliers: '딱히 놀릴 만한 결과가 없어요 — 다들 비슷하게 풀었음.',
   },
-  history: {
-    // 결과 화면 패자 옆 작은 칩. 1회째는 표시하지 않음(노이즈 감소).
-    loserBadge: (n: number) => `${n}회째 🎯`,
-
-    // 로비 섹션
-    sectionTitle: '역대 벌칙',
-    sectionToggleHide: '접기',
-    sectionToggleShow: '펼치기',
-    empty: '아직 기록이 없어요. 한 판 돌리면 여기 쌓여요.',
-    loadFailed: '히스토리를 불러오지 못했어요',
-    rowLosses: (n: number) => `${n}회 당첨`,
-    rowPlays: (n: number) => `${n}판`,
-    medal: (rank: number) => (rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`),
-
-    // 초기화
-    resetButton: '비우기',
-    resetConfirmTitle: '히스토리를 비울까요?',
-    resetConfirmBody: '지금까지의 모든 기록이 사라져요. 되돌릴 수 없어요.',
-    resetConfirmYes: '비우기',
-    resetConfirmNo: '취소',
-    resetFailed: '비우기에 실패했어요',
-  },
   dev: {
     botNames: ['봇1', '봇2', '봇3', '봇4', '봇5'] as const,
   },

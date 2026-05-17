@@ -32,7 +32,7 @@
 - **재연결 복구**: 끊겨도 10초 grace 안에 같은 토큰으로 돌아오면 상태 복구
 - **결과 후 자동 정리**: 결과 화면 3분 idle → 메인 자동 이동, 빈 방 60초 후 소멸
 - **남용 가드**: 전역 동시 방 수 상한(`ROOM.MAX_ROOMS`)으로 무한 방 생성 차단 (단일 인스턴스 OOM 방지)
-- **역대 벌칙 누적**: 닉네임 단위로 게임 결과 누적 → 로비 하단 리더보드 + 결과 화면 "N회째 🎯" 칩. 단일 SQLite 파일(`data/history.sqlite`)에만 저장, 단일 그룹 self-host 전제 (다중 그룹 격리 없음). 호스트는 "비우기"로 전체 초기화 가능
+- **완전 메모리 전용**: DB·영속 저장소 없음. 방·플레이어는 서버 메모리에만, 서버 재시작 시 초기화 (공개 범용 서비스 — 그룹 간 데이터 격리 이슈 원천 차단)
 
 ## 개발
 
@@ -56,19 +56,18 @@ fly deploy             # 90초, 실 LTE 환경 검증용
 
 ```bash
 fly launch --copy-config --no-deploy   # 첫 배포 시
-fly volumes create coffee_data --size 1 --region nrt   # 히스토리 영구 볼륨 (최초 1회)
 fly deploy
 ```
 
 도쿄(nrt) 리전 + `shared-cpu-1x` / 512MB 한 대로 충분. 설정은 [`fly.toml`](fly.toml).
 
-**볼륨 메모**: `coffee_data`(1GB)는 `data/history.sqlite`만 보관. scale-to-zero(`auto_stop_machines = "stop"`)와 호환 — 머신이 자도 볼륨은 그대로 붙어있고, 깨어날 때 같은 파일이 다시 보임. **HA로 머신을 늘리면 볼륨도 분리되므로 단일 인스턴스 운영이 전제**(필요 시 외부 DB로 이전).
+영속 저장소가 없어 볼륨 불필요 — `auto_stop_machines = "stop"`로 유휴 시 자동 정지(scale-to-zero). 상태는 전부 메모리라 머신이 자거나 재배포되면 진행 중인 방은 사라지고 새로 시작.
 
 ## 아키텍처 한눈에
 
 - **Next.js 16 (App Router)** + 커스텀 Node 서버([`server.ts`](server.ts))에 **Socket.IO** 부착
 - **box2d-wasm**으로 서버에서 헤드리스 물리 시뮬, 클라는 받은 프레임 재생만 ([`src/games/marble/`](src/games/marble/))
-- 방·플레이어는 서버 메모리 `Map`에만 (빈 방 60초 후 소멸). 누적 히스토리만 단일 SQLite 파일에 저장
+- 방·플레이어는 서버 메모리 `Map`에만 (빈 방 60초 후 소멸). DB·영속 저장소 전혀 없음
 - 모바일 퍼스트 UI: Tailwind + Pretendard, amber-400 = primary
 - 한국어 카피는 [`src/lib/i18n.ts`](src/lib/i18n.ts) 한 곳에서만
 
