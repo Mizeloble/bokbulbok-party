@@ -13,6 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --remote-only --yes
+      # --ha=false: 메모리 전용 단일 인스턴스 전제. 0대→재생성 시에도 1대만 띄움.
+      - run: flyctl deploy --remote-only --yes --ha=false
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
