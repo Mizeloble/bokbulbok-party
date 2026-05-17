@@ -18,8 +18,16 @@ async function main() {
     return handle(req, res, parsedUrl);
   });
 
+  // No cookie-based auth (tokens travel in socket payloads / sessionStorage), so
+  // credentials are unnecessary. In prod, restrict the reflected origin to the
+  // deployed host to avoid third-party embeds spamming room creation; dev keeps
+  // `true` so localhost + LAN QR testing keeps working.
+  const allowedOrigin = dev
+    ? true
+    : process.env.ALLOWED_ORIGIN ?? 'https://ax-lunch-coffee.fly.dev';
+
   const io = new IOServer(httpServer, {
-    cors: { origin: true, credentials: true },
+    cors: { origin: allowedOrigin },
     pingInterval: 20_000,
     pingTimeout: 25_000,
   });

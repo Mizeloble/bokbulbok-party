@@ -5,6 +5,7 @@ import {
   clearMarbleTilt,
   clearReaction,
   clearTrivia,
+  deleteRoom,
   findPlayerBySocket,
   getRoom,
   isHostToken,
@@ -240,6 +241,12 @@ export function attachSocketHandlers(io: IO) {
       player.graceTimer = setTimeout(() => {
         if (!player.connected) {
           room.players.delete(player.playerToken);
+          // Last player gone — delete the room now instead of letting `touch`
+          // push the idle cleanup another IDLE_MS out (would hold a MAX_ROOMS slot).
+          if (room.players.size === 0) {
+            deleteRoom(room.id);
+            return;
+          }
           touch(room);
           io.to(room.id).emit('state', publicRoomState(room));
         }
@@ -563,6 +570,11 @@ async function runTriviaRound(io: IO, room: RoomState) {
     const now = Date.now();
     if (now >= room.trivia.closeAts[qIndex]) return; // already past; reveal will fire on its own
     for (const tok of expectedTokens) {
+      // Only wait on players still present & connected. A player who left
+      // mid-round (removed after grace, or disconnected) can never answer —
+      // blocking on them would stall the short-circuit until finishTimer.
+      const p = room.players.get(tok);
+      if (!p || !p.connected) continue;
       const ans = room.trivia.answers.get(tok)?.[qIndex];
       if (!ans) return; // someone hasn't answered yet
     }
