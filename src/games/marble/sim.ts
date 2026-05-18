@@ -114,6 +114,10 @@ export async function simulateRace(
   chargeRatios?: Record<string, number>,
 ): Promise<SimulationResult> {
   const rng = mulberry32(seed);
+  // Separate seed-derived stream for ordering ties only. Kept apart from `rng`
+  // so the main simulation's RNG call count/order stays byte-identical (seed
+  // reproducibility contract — see the spawnMarbles doc comment above).
+  const tieRng = mulberry32((seed ^ 0x9e3779b9) >>> 0);
 
   const physics = new Box2dPhysics(rng);
   await physics.init();
@@ -162,6 +166,7 @@ export async function simulateRace(
     }
 
     const snap = new Array(players.length * 2);
+    const crossedThisFrame: { i: number; y: number; key: number }[] = [];
     for (let i = 0; i < players.length; i++) {
       const frozen = frozenPositions.get(i);
       const p = frozen ?? physics.getMarblePosition(i);
@@ -190,11 +195,19 @@ export async function simulateRace(
 
       if (p.y > stage.goalY) {
         finishedSet.add(i);
-        finishOrder.push(players[i].playerToken);
         finishFrames[i] = frameIdx;
         frozenPositions.set(i, { x: p.x, y: stage.goalY + 0.5 });
         physics.removeMarble(i);
+        // Defer the finishOrder push: marbles crossing on the *same* frame must
+        // not be ranked by array index (that systematically favors low indices).
+        // Rank them by how far past the goal line they are, breaking exact ties
+        // with the seed-derived tieRng.
+        crossedThisFrame.push({ i, y: p.y, key: tieRng() });
       }
+    }
+    if (crossedThisFrame.length > 0) {
+      crossedThisFrame.sort((a, b) => b.y - a.y || a.key - b.key);
+      for (const c of crossedThisFrame) finishOrder.push(players[c.i].playerToken);
     }
     frames.push(snap);
     frameIdx++;
@@ -209,11 +222,13 @@ export async function simulateRace(
   // is complete.
   if (finishedSet.size < players.length) {
     const lastFrame = frames[frames.length - 1];
-    const remaining: { idx: number; y: number }[] = [];
+    const remaining: { idx: number; y: number; key: number }[] = [];
     for (let i = 0; i < players.length; i++) {
-      if (!finishedSet.has(i)) remaining.push({ idx: i, y: lastFrame[i * 2 + 1] });
+      if (!finishedSet.has(i)) remaining.push({ idx: i, y: lastFrame[i * 2 + 1], key: tieRng() });
     }
-    remaining.sort((a, b) => b.y - a.y);
+    // y descending = closer to goal ranks better; equal-y ties broken by the
+    // seed-derived tieRng instead of array index (stable-sort index bias).
+    remaining.sort((a, b) => b.y - a.y || a.key - b.key);
     for (const r of remaining) finishOrder.push(players[r.idx].playerToken);
   }
 
