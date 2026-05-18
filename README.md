@@ -21,7 +21,6 @@
 
 호스트가 방을 열고 QR 코드를 띄우면 다른 사람들이 폰 카메라로 스캔해서 입장 → 게임 한 판 → 꼴찌가 벌칙 🎯.
 
-- **데모 배포**: [ax-lunch-coffee.fly.dev](https://ax-lunch-coffee.fly.dev) (Fly.io · 도쿄 nrt)
 - **상태**: 마블 / 응원 마블 / 반응속도 / 일반 상식 퀴즈 활성. 슬롯·탈락 룰렛은 후속.
 
 ## 게임
@@ -70,11 +69,12 @@ fly deploy             # 90초, 실 LTE 환경 검증용
 ## 배포 (Fly.io)
 
 ```bash
-fly launch --copy-config --no-deploy   # 첫 배포 시
+fly launch --no-deploy   # 첫 배포 시 fly.toml 자동 생성 (앱 이름은 본인 것으로)
+fly secrets set ALLOWED_ORIGIN=https://<your-app>.fly.dev
 fly deploy
 ```
 
-도쿄(nrt) 리전 + `shared-cpu-1x` / 512MB 한 대로 충분. 설정은 [`fly.toml`](fly.toml).
+도쿄(nrt) 리전 + `shared-cpu-1x` / 512MB 한 대로 충분. `fly launch`가 생성하는 `fly.toml`에 설정 (앱 이름·배포 URL은 공개 데모 노출 방지를 위해 레포에 커밋하지 않음 — `fly.toml`은 `.gitignore`).
 
 영속 저장소가 없어 볼륨 불필요 — `auto_stop_machines = "stop"`로 유휴 시 자동 정지(scale-to-zero). 상태는 전부 메모리라 머신이 자거나 재배포되면 진행 중인 방은 사라지고 새로 시작.
 
