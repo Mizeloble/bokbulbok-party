@@ -19,12 +19,13 @@ async function main() {
   });
 
   // No cookie-based auth (tokens travel in socket payloads / sessionStorage), so
-  // credentials are unnecessary. In prod, restrict the reflected origin to the
-  // deployed host to avoid third-party embeds spamming room creation; dev keeps
-  // `true` so localhost + LAN QR testing keeps working.
+  // credentials are unnecessary. In prod set ALLOWED_ORIGIN to the deployed host;
+  // unset falls back to `false` (cross-origin denied — same-origin still works) so
+  // no deployment URL is baked into the public source. Dev keeps `true` so
+  // localhost + LAN QR testing keeps working.
   const allowedOrigin = dev
     ? true
-    : process.env.ALLOWED_ORIGIN ?? 'https://ax-lunch-coffee.fly.dev';
+    : process.env.ALLOWED_ORIGIN ?? false;
 
   const io = new IOServer(httpServer, {
     cors: { origin: allowedOrigin },
