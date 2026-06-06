@@ -78,6 +78,17 @@ fly deploy
 
 영속 저장소가 없어 볼륨 불필요 — `auto_stop_machines = "stop"`로 유휴 시 자동 정지(scale-to-zero). 상태는 전부 메모리라 머신이 자거나 재배포되면 진행 중인 방은 사라지고 새로 시작.
 
+## 광고 / 수익화 (선택)
+
+서버비 충당용 광고는 환경변수로 켜는 옵션이에요. 기본값은 `none` — 키 없이는 광고가 로드되지 않아요(오픈소스/개발 기본).
+
+- `NEXT_PUBLIC_AD_NETWORK=adfit` → 카카오 애드핏(한국 타겟 권장), `=adsense` → 구글 애드센스. 전환 로직은 [`src/lib/ads.ts`](src/lib/ads.ts) 한 곳.
+- 광고는 **대기 시간 화면(로비·결과·랜딩)에만** 배너로. 게임 진행 중엔 절대 넣지 않아요 ([`AdSlot`](src/components/AdSlot.tsx)).
+- 맞춤 광고는 [`ConsentBanner`](src/components/ConsentBanner.tsx) 동의 후에만. 선택은 `localStorage('bbk:consent')`.
+- 개인정보처리방침/약관은 [`/privacy`](src/app/privacy/page.tsx)·[`/terms`](src/app/terms/page.tsx). 자리별 광고 단위 ID는 `.env`에 채워요([`.env.example`](.env.example) 참고).
+
+> 애드센스는 본인 소유 도메인·개인정보처리방침·일정 트래픽이 사실상 필수라 승인 문턱이 높아요. 게임/도구형 사이트는 애드핏으로 시작하는 걸 권장.
+
 ## 아키텍처 한눈에
 
 - **Next.js 16 (App Router)** + 커스텀 Node 서버([`server.ts`](server.ts))에 **Socket.IO** 부착
