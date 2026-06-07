@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ko } from '@/lib/i18n';
 import { useRoomStore } from '@/store/room-store';
+import { AdSlot } from './AdSlot';
 import { getSocket } from '@/lib/socket-client';
 import { GAME } from '@/lib/constants';
 import type { ReactionReplayData } from '@/games/reaction/server';
@@ -253,6 +254,9 @@ export function ResultScreen({ onReplay }: { onReplay?: () => void } = {}) {
             )}
           </div>
         )}
+
+        {/* 대기 시간 광고 — 액션 버튼 아래. 다음 라운드를 기다리는 동안 노출 */}
+        <AdSlot placement="result" width={320} height={50} className="mt-6" />
 
         {/* Inline ranking (guest disclosure) */}
         {!isHost && showRanking && fullRanking.length > 0 && (

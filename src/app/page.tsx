@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ko } from '@/lib/i18n';
-import { APP_VERSION } from '@/lib/version';
+import { AdSlot } from '@/components/AdSlot';
+import { SiteFooter } from '@/components/SiteFooter';
 
 export default function LandingPage() {
   const router = useRouter();
@@ -61,31 +62,10 @@ export default function LandingPage() {
           >
             {busy ? ko.landing.creating : ko.landing.createRoom}
           </button>
+          <AdSlot placement="landing" width={320} height={50} />
         </div>
       </div>
-      <footer className="py-4 pb-[max(env(safe-area-inset-bottom),16px)] text-xs text-zinc-600">
-        {ko.credit.org} ·{' '}
-        {ko.credit.authorUrl ? (
-          <a
-            href={ko.credit.authorUrl}
-            className="underline-offset-2 hover:underline hover:text-zinc-400"
-          >
-            {ko.credit.authorHandle}
-          </a>
-        ) : (
-          <span>{ko.credit.authorHandle}</span>
-        )}{' '}
-        ·{' '}
-        <a
-          href={ko.credit.repoUrl}
-          target="_blank"
-          rel="noreferrer noopener"
-          className="underline-offset-2 hover:underline hover:text-zinc-400"
-        >
-          {ko.credit.repoLabel}
-        </a>{' '}
-        · {ko.credit.version(APP_VERSION)}
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

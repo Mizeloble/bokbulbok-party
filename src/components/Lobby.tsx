@@ -7,6 +7,7 @@ import { GamePicker } from './GamePicker';
 import { GameIntro } from './GameIntro';
 import { InviteSheet } from './InviteSheet';
 import { TiltPermissionGate } from '@/games/marble-tilt/TiltPermissionGate';
+import { AdSlot } from './AdSlot';
 import { getSocket } from '@/lib/socket-client';
 import type { GameId } from '@/games/types';
 import clsx from 'clsx';
@@ -287,6 +288,9 @@ export function Lobby({ inviteUrl, onChangeNickname }: { inviteUrl: string; onCh
             </div>
           )}
         </div>
+
+        {/* 대기 시간 광고 — 참가자 목록 아래, 스티키 시작 버튼과 겹치지 않게 스크롤 영역 안 */}
+        <AdSlot placement="lobby" width={320} height={50} className="mt-2" />
       </section>
 
       {/* sticky bottom CTA (host only) */}
