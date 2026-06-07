@@ -15,10 +15,25 @@ jobs:
       - uses: superfly/flyctl-actions/setup-flyctl@master
       # --ha=false: 메모리 전용 단일 인스턴스 전제. 0대→재생성 시에도 1대만 띄움.
       # 크레딧 식별자는 repo secret에서 build-arg로 주입 (소스에 사내 정보 미커밋).
+      # 광고/사이트URL/분석은 클라 번들에 인라인되는 공개 값이라 repo variable(vars)로 주입.
+      # NEXT_PUBLIC_* 은 빌드 시점 치환 — 런타임 fly secret으론 안 먹으므로 반드시 build-arg.
+      # 미설정 variable은 빈 문자열로 전달되고 각 모듈이 공개 fallback(none/localhost)로 처리.
       - run: >
           flyctl deploy --remote-only --yes --ha=false
           --build-arg NEXT_PUBLIC_CREDIT_ORG="${{ secrets.CREDIT_ORG }}"
           --build-arg NEXT_PUBLIC_CREDIT_AUTHOR="${{ secrets.CREDIT_AUTHOR }}"
           --build-arg NEXT_PUBLIC_CREDIT_AUTHOR_URL="${{ secrets.CREDIT_AUTHOR_URL }}"
+          --build-arg NEXT_PUBLIC_AD_NETWORK="${{ vars.AD_NETWORK }}"
+          --build-arg NEXT_PUBLIC_ADFIT_UNIT_LOBBY="${{ vars.ADFIT_UNIT_LOBBY }}"
+          --build-arg NEXT_PUBLIC_ADFIT_UNIT_RESULT="${{ vars.ADFIT_UNIT_RESULT }}"
+          --build-arg NEXT_PUBLIC_ADFIT_UNIT_LANDING="${{ vars.ADFIT_UNIT_LANDING }}"
+          --build-arg NEXT_PUBLIC_ADSENSE_CLIENT="${{ vars.ADSENSE_CLIENT }}"
+          --build-arg NEXT_PUBLIC_ADSENSE_SLOT_LOBBY="${{ vars.ADSENSE_SLOT_LOBBY }}"
+          --build-arg NEXT_PUBLIC_ADSENSE_SLOT_RESULT="${{ vars.ADSENSE_SLOT_RESULT }}"
+          --build-arg NEXT_PUBLIC_ADSENSE_SLOT_LANDING="${{ vars.ADSENSE_SLOT_LANDING }}"
+          --build-arg NEXT_PUBLIC_SITE_URL="${{ vars.SITE_URL }}"
+          --build-arg NEXT_PUBLIC_ANALYTICS_PROVIDER="${{ vars.ANALYTICS_PROVIDER }}"
+          --build-arg NEXT_PUBLIC_PLAUSIBLE_DOMAIN="${{ vars.PLAUSIBLE_DOMAIN }}"
+          --build-arg NEXT_PUBLIC_GA_ID="${{ vars.GA_ID }}"
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
