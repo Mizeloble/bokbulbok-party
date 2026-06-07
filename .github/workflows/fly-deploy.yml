@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:    # 수동 재배포 트리거(Actions 탭 "Run workflow") — 코드 변경 없이 env/secret 갱신 반영용
 jobs:
   deploy:
     name: Deploy app
