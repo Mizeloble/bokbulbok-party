@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import { ko } from '@/lib/i18n';
 import { AD_NETWORK, ADSENSE_CLIENT } from '@/lib/ads';
-import { ANALYTICS_PROVIDER, GA_ID, PLAUSIBLE_DOMAIN } from '@/lib/analytics';
+import { ANALYTICS_PROVIDER, CF_BEACON_TOKEN, GA_ID, PLAUSIBLE_DOMAIN } from '@/lib/analytics';
 import { ConsentBanner } from '@/components/ConsentBanner';
 import './globals.css';
 
@@ -63,6 +63,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           />
         )}
         {/* 분석 — env로 켰을 때만. 익명 집계(개인정보처리방침 일치). 기본 none=미로딩. */}
+        {ANALYTICS_PROVIDER === 'cloudflare' && CF_BEACON_TOKEN && (
+          <Script
+            defer
+            src="https://static.cloudflareinsights.com/beacon.min.js"
+            data-cf-beacon={JSON.stringify({ token: CF_BEACON_TOKEN })}
+            strategy="afterInteractive"
+          />
+        )}
         {ANALYTICS_PROVIDER === 'plausible' && PLAUSIBLE_DOMAIN && (
           <Script
             defer
