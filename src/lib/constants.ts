@@ -78,6 +78,16 @@ export const NICKNAME = {
   MAX_LENGTH: 10,
 } as const;
 
+export const RATE_LIMIT = {
+  /**
+   * 방 생성(POST /api/rooms) IP별 고정 윈도우 제한. 공개 엔드포인트 스팸/남용 방지.
+   * 프로덕션에서만 적용(개발·LAN 테스트는 통과). 한 IP에서 윈도우 안에 정상적으로
+   * 방을 여러 번 여는 경우(재시도·여러 모임)를 막지 않도록 넉넉히 잡음.
+   */
+  ROOM_CREATE_WINDOW_MS: 60_000,
+  ROOM_CREATE_MAX: 10,
+} as const;
+
 export const UI = {
   /** Countdown "시작!" badge linger time. */
   FLASH_MS: 700,
