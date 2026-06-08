@@ -8,24 +8,24 @@
 
 ## 지금: fly.dev + 분석으로 오픈 (광고 보류)
 
-오픈 URL은 `https://ax-lunch-coffee.fly.dev`. 광고 관련 variable은 **건드리지 않음**(전부 none 유지 → 광고·동의배너 안 뜸).
+오픈 URL은 `https://bokbulbok-party.fly.dev`. 광고 관련 variable은 **건드리지 않음**(전부 none 유지 → 광고·동의배너 안 뜸).
 
 ### A. 분석 — 택1 (`src/lib/analytics.ts`)
 수익화 가치 판단 근거(트래픽 측정). 익명 집계만.
 - **Cloudflare Web Analytics (권장)** — **무료 + 쿠키리스**(동의 배너 불필요). fly.dev를 CF 프록시 뒤에 안 둬도 매뉴얼 beacon 스크립트로 동작. 측정은 얕음(방문/유입/페이지/국가)이지만 "트래픽 가늠" 목적엔 충분.
-  CF 대시보드 → Web Analytics → **Add a site** `ax-lunch-coffee.fly.dev` → 발급된 **beacon 토큰** 복사 → variable: `ANALYTICS_PROVIDER=cloudflare`, `CF_BEACON_TOKEN=<토큰>`.
-- **Plausible** — 쿠키리스·노-동의지만 유료($9/월, 30일 트라이얼). variable: `ANALYTICS_PROVIDER=plausible`, `PLAUSIBLE_DOMAIN=ax-lunch-coffee.fly.dev`.
+  CF 대시보드 → Web Analytics → **Add a site** `bokbulbok-party.fly.dev` → 발급된 **beacon 토큰** 복사 → variable: `ANALYTICS_PROVIDER=cloudflare`, `CF_BEACON_TOKEN=<토큰>`. **← 현재 채택 경로.**
+- **Plausible** — 쿠키리스·노-동의지만 유료($9/월, 30일 트라이얼). variable: `ANALYTICS_PROVIDER=plausible`, `PLAUSIBLE_DOMAIN=bokbulbok-party.fly.dev`.
 - **GA4** — 무료지만 식별자 사용 → 동의 이슈. variable: `ANALYTICS_PROVIDER=ga`, `GA_ID=G-XXXXXXX`.
 
 ### B. 등록할 GitHub repo variable (Settings → Secrets and variables → Actions → **Variables** 탭)
 | variable | 값 |
 |---|---|
-| `SITE_URL` | `https://ax-lunch-coffee.fly.dev` — 공유 미리보기(OG) 절대경로 기준. 안 넣으면 localhost로 깨짐 |
+| `SITE_URL` | `https://bokbulbok-party.fly.dev` — 공유 미리보기(OG) 절대경로 기준. 안 넣으면 localhost로 깨짐 |
 | `ANALYTICS_PROVIDER` | `cloudflare` (권장) / `plausible` / `ga` |
 | `CF_BEACON_TOKEN` / `PLAUSIBLE_DOMAIN` / `GA_ID` | 위 선택에 맞춰 하나 |
 
 ### C. Fly secret (런타임)
-- [ ] `fly secrets set ALLOWED_ORIGIN=https://ax-lunch-coffee.fly.dev` — 소켓 CORS 고정(`server.ts`).
+- [x] `fly secrets set ALLOWED_ORIGIN=https://bokbulbok-party.fly.dev` — 소켓 CORS 고정(`server.ts`). 동일출처라 게임엔 필수 아님(미스매치여도 same-origin 통과)이나 정확성 위해 설정됨.
 
 ### D. 배포 & 확인
 - [ ] 위 variable/secret 등록 후 main에 push(또는 워크플로 재실행)하면 빌드 반영.
