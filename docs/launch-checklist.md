@@ -28,10 +28,10 @@
 - [x] `fly secrets set ALLOWED_ORIGIN=https://bokbulbok-party.fly.dev` — 소켓 CORS 고정(`server.ts`). 동일출처라 게임엔 필수 아님(미스매치여도 same-origin 통과)이나 정확성 위해 설정됨.
 
 ### D. 배포 & 확인
-- [ ] 위 variable/secret 등록 후 main에 push(또는 워크플로 재실행)하면 빌드 반영.
-- [ ] 카카오톡에 방 링크 붙여 OG 미리보기(제목·🎯 카드) 정상 확인.
-- [ ] 분석 대시보드에 방문 잡히는지, `/privacy`·`/terms` 정상.
-- [ ] 광고 자리 비어 있고 동의 배너 안 뜨는지(광고 off라 정상).
+- [x] 위 variable/secret 등록 후 main에 push(또는 워크플로 재실행)하면 빌드 반영. — CF beacon 토큰 라이브 HTML에 주입 확인(2026-06-09).
+- [x] OG 미리보기 메타·이미지 정상 — `og:title=복불복`, `og:image` 절대경로→fly.dev, 실물 1200×630 PNG 렌더. (카카오톡 실물 캐시는 방 링크 직접 붙여 🎯 카드 확인 권장.)
+- [x] `/privacy`·`/terms` 정상(둘 다 200). (CF 대시보드 방문 집계는 로그인해 확인.)
+- [x] 광고 자리 비어 있고 동의 배너 안 뜸(adfit/adsense·consent 흔적 없음 — 광고 off라 정상).
 
 ---
 
