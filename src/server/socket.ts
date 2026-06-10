@@ -14,12 +14,23 @@ import {
   type RoomState,
 } from './rooms';
 import { prepareGameIntro, runGame } from './game-runner';
-import { buildTriviaPlan, type TriviaReplayData } from '../games/trivia/server';
+import { buildQuizPlan, type QuizQuestion, type TriviaReplayData } from '../games/trivia/server';
+import { TRIVIA_POOL_SORTED } from '../games/trivia/questions';
+import { NONSENSE_POOL_SORTED } from '../games/nonsense/questions';
 import { computeRunningScores } from '../games/trivia/scoring';
 import { ko } from '../lib/i18n';
 import { GAME, NICKNAME, ROOM } from '../lib/constants';
-import { GAME_META } from '../games/types';
+import { GAME_META, type GameId } from '../games/types';
 import type { TriviaPerPlayerAnswers } from '../games/types';
+
+// Quiz-family games share one engine (4-choice, speed+combo scoring, live standings):
+// trivia and nonsense differ only by question pool. The runner below picks the pool
+// by gameId; the rest of the flow (state, `trivia:*` events) is content-agnostic.
+const QUIZ_POOLS: Partial<Record<GameId, readonly QuizQuestion[]>> = {
+  trivia: TRIVIA_POOL_SORTED,
+  nonsense: NONSENSE_POOL_SORTED,
+};
+const isQuizGame = (gameId: GameId): boolean => gameId in QUIZ_POOLS;
 import type { ClientToServerEvents, ServerToClientEvents } from '../lib/protocol';
 import { mulberry32 } from '../games/reaction/server';
 import { MarbleTiltLiveSim } from '../games/marble-tilt/liveSim';
@@ -127,8 +138,8 @@ export function attachSocketHandlers(io: IO) {
       if (room.gameId === 'marble-tilt') {
         await runMarbleTiltRound(io, room);
       } else if (meta.needsClientInput) {
-        if (room.gameId === 'trivia') {
-          await runTriviaRound(io, room);
+        if (isQuizGame(room.gameId)) {
+          await runQuizRound(io, room);
         } else {
           await runReactionRound(io, room);
         }
@@ -169,7 +180,7 @@ export function attachSocketHandlers(io: IO) {
       // Capture arrival time IMMEDIATELY — server-arrival is the truth for tiebreak.
       const arrivalAt = Date.now();
       const room = currentRoomId ? getRoom(currentRoomId) : null;
-      if (!room || room.gameId !== 'trivia' || !room.trivia) return;
+      if (!room || !isQuizGame(room.gameId) || !room.trivia) return;
       if (room.status !== 'playing') return;
       if (typeof qIndex !== 'number' || !Number.isInteger(qIndex)) return;
       if (qIndex < 0 || qIndex >= room.trivia.openAts.length) return;
@@ -416,7 +427,8 @@ async function runReactionRound(io: IO, room: RoomState) {
 }
 
 /**
- * Trivia game round: client-input game with N sequential question phases. Flow:
+ * Quiz round (trivia / nonsense): client-input game with N sequential question
+ * phases. Pool is chosen by `room.gameId`; everything else is content-agnostic. Flow:
  *   1. countdown (3s) — clients render "준비…" off the renderer's startAt gate.
  *   2. for each question i: phase open at openAt[i], close at closeAt[i] = openAt[i] + QUESTION_MS.
  *      Server accepts `trivia:answer` only when arrival is in [openAt[i], closeAt[i]].
@@ -428,14 +440,21 @@ async function runReactionRound(io: IO, room: RoomState) {
  * Like reaction, `game:start` carries a full intro replay (the entire schedule +
  * questions + correct indices). The final `game:result` only needs ranking/losers.
  */
-async function runTriviaRound(io: IO, room: RoomState) {
+async function runQuizRound(io: IO, room: RoomState) {
   const connectedPlayers = [...room.players.values()].filter((p) => p.connected);
   if (connectedPlayers.length < GAME.MIN_PLAYERS) return;
 
+  const gameId = room.gameId;
+  const pool = QUIZ_POOLS[gameId];
+  if (!pool) {
+    console.error('quiz round started for non-quiz game', gameId);
+    return;
+  }
+
   const seed = (Math.random() * 0x7fffffff) | 0;
-  const plan = buildTriviaPlan(seed);
+  const plan = buildQuizPlan(seed, pool);
   if (plan.questions.length === 0) {
-    console.error('trivia plan returned no questions');
+    console.error('quiz plan returned no questions');
     return;
   }
 
@@ -462,7 +481,7 @@ async function runTriviaRound(io: IO, room: RoomState) {
     losers: [] as string[],
     data: introData,
   };
-  room.currentRound = { gameId: 'trivia', seed, startAt, replay: introReplay };
+  room.currentRound = { gameId, seed, startAt, replay: introReplay };
 
   // Pre-allocate per-player answer slots so the `trivia:answer` handler can no-op
   // for unknown tokens. Each entry mutates in place.
@@ -492,14 +511,14 @@ async function runTriviaRound(io: IO, room: RoomState) {
     let replay;
     try {
       replay = await runGame({
-        gameId: 'trivia',
+        gameId,
         seed,
         players: connectedPlayers,
         loserCount: room.loserCount,
         triviaAnswers,
       });
     } catch (err) {
-      console.error('trivia runGame failed', err);
+      console.error('quiz runGame failed', err);
       clearTrivia(room);
       room.status = 'lobby';
       room.currentRound = undefined;
@@ -507,7 +526,7 @@ async function runTriviaRound(io: IO, room: RoomState) {
       return;
     }
 
-    room.currentRound = { gameId: 'trivia', seed, startAt, replay };
+    room.currentRound = { gameId, seed, startAt, replay };
     clearTrivia(room);
     room.status = 'result';
     io.to(room.id).emit('state', publicRoomState(room));
@@ -630,7 +649,7 @@ async function runTriviaRound(io: IO, room: RoomState) {
   io.to(room.id).emit('state', publicRoomState(room));
   io.to(room.id).emit('countdown', { startAt });
   io.to(room.id).emit('game:start', {
-    gameId: 'trivia',
+    gameId,
     seed,
     startAt,
     durationMs: plan.durationMs,

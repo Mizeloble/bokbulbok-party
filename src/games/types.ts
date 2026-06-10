@@ -99,6 +99,15 @@ export const GAME_META = {
     needsPreCharge: false,
     enabled: true,
   },
+  // Same engine as trivia (4-choice quiz, speed+combo scoring, live standings) —
+  // only the question pool & tone differ. Reuses trivia's plan/score/Renderer.
+  nonsense: {
+    emoji: '🤪',
+    estimatedSeconds: 30,
+    needsClientInput: true,
+    needsPreCharge: false,
+    enabled: true,
+  },
 } as const;
 
 export type GameId = keyof typeof GAME_META;

@@ -4,6 +4,7 @@ import { marbleCheerServer } from '../games/marble-cheer/server';
 import { marbleTiltServer } from '../games/marble-tilt/server';
 import { reactionServer } from '../games/reaction/server';
 import { triviaServer } from '../games/trivia/server';
+import { nonsenseServer } from '../games/nonsense/server';
 import type { GameIntroTimings, GameServerModule, TriviaPerPlayerAnswers } from '../games/types';
 import { GAME_META } from '../games/types';
 
@@ -18,6 +19,7 @@ const REGISTRY: Record<GameId, GameServerModule | null> = {
   elimination: null,
   reaction: reactionServer,
   trivia: triviaServer,
+  nonsense: nonsenseServer,
 };
 
 export async function runGame(args: {

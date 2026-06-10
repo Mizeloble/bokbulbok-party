@@ -220,12 +220,14 @@ export default function RoomClient({
     !!gameStart && (gameStart.gameId === 'marble' || gameStart.gameId === 'marble-cheer');
   const isMarbleTiltGame = !!gameStart && gameStart.gameId === 'marble-tilt';
   const isReactionGame = !!gameStart && gameStart.gameId === 'reaction';
-  const isTriviaGame = !!gameStart && gameStart.gameId === 'trivia';
-  // Reaction and trivia have nothing to "watch" after the round ends — flip to
+  // trivia and nonsense share the same renderer/replay shape (4-choice quiz engine).
+  const isQuizGame =
+    !!gameStart && (gameStart.gameId === 'trivia' || gameStart.gameId === 'nonsense');
+  // Reaction and quiz games have nothing to "watch" after the round ends — flip to
   // result immediately. Marble keeps the renderer visible past the flip so replay
   // frames finish, gated by a tap-to-continue prompt. Marble-tilt also keeps the
   // gate so the loser-decided fanfare has time to land.
-  const skipResultGate = isReactionGame || isTriviaGame;
+  const skipResultGate = isReactionGame || isQuizGame;
   const showGame =
     replayPlayed &&
     state?.status !== 'lobby' &&
@@ -286,7 +288,7 @@ export default function RoomClient({
         </div>
       )}
 
-      {showGame && gameStart && isTriviaGame && (
+      {showGame && gameStart && isQuizGame && (
         <div className="fixed inset-0 z-20">
           <TriviaRenderer
             key={effectiveStartAt}
@@ -299,7 +301,7 @@ export default function RoomClient({
         </div>
       )}
 
-      {showCountdown && gameStart && !isReactionGame && !isTriviaGame && (
+      {showCountdown && gameStart && !isReactionGame && !isQuizGame && (
         <Countdown startAt={effectiveStartAt} />
       )}
 

@@ -1,8 +1,22 @@
 import type { ReplayPayload } from '../../server/rooms';
 import type { ComputeResultInput, GameIntroTimings, GameServerModule } from '../types';
 import { GAME } from '../../lib/constants';
-import { TRIVIA_POOL_SORTED, type TriviaQuestion } from './questions';
+import { TRIVIA_POOL_SORTED } from './questions';
 import { computeRunningScores } from './scoring';
+
+/**
+ * Structural shape every quiz question must satisfy. Both trivia and nonsense
+ * pools are assignable to this (their narrower `category` unions widen to string),
+ * so the plan/score engine below stays content-agnostic and is shared by both games.
+ */
+export type QuizQuestion = {
+  id: string;
+  category: string;
+  question: string;
+  choices: readonly [string, string, string, string];
+  correctIndex: 0 | 1 | 2 | 3;
+  note?: string;
+};
 
 /**
  * Replay payload broadcast on game:start. Carries everything the client needs to
@@ -62,8 +76,12 @@ function mulberry32(seed: number) {
   };
 }
 
-function pickQuestions(rng: () => number, count: number): TriviaQuestion[] {
-  const pool = [...TRIVIA_POOL_SORTED];
+function pickQuestions(
+  rng: () => number,
+  count: number,
+  sortedPool: readonly QuizQuestion[],
+): QuizQuestion[] {
+  const pool = [...sortedPool];
   const n = Math.min(count, pool.length);
   for (let i = 0; i < n; i++) {
     const j = i + Math.floor(rng() * (pool.length - i));
@@ -76,7 +94,7 @@ function pickQuestions(rng: () => number, count: number): TriviaQuestion[] {
 
 function shuffleChoices(
   rng: () => number,
-  question: TriviaQuestion,
+  question: QuizQuestion,
 ): { choices: [string, string, string, string]; correctIndex: 0 | 1 | 2 | 3 } {
   const order = [0, 1, 2, 3];
   for (let i = 3; i > 0; i--) {
@@ -100,13 +118,16 @@ function shuffleChoices(
  * then per-question shuffleChoices. Add new rng consumers only at the end to keep
  * existing seed→output mappings stable.
  */
-export function buildTriviaPlan(seed: number): {
+export function buildQuizPlan(
+  seed: number,
+  sortedPool: readonly QuizQuestion[],
+): {
   questions: Omit<TriviaReplayData, 'scores'>['questions'];
   schedule: TriviaReplayData['schedule'];
   durationMs: number;
 } {
   const rng = mulberry32(seed);
-  const picks = pickQuestions(rng, GAME.TRIVIA_QUESTION_COUNT);
+  const picks = pickQuestions(rng, GAME.TRIVIA_QUESTION_COUNT, sortedPool);
 
   const questions = picks.map((q) => {
     const { choices, correctIndex } = shuffleChoices(rng, q);
@@ -138,13 +159,25 @@ export function buildTriviaPlan(seed: number): {
   };
 }
 
-export function prepareTriviaIntro(seed: number): GameIntroTimings {
-  const plan = buildTriviaPlan(seed);
+/** Thin trivia-pool wrapper kept for existing callers (socket.ts game:start broadcast). */
+export function buildTriviaPlan(seed: number): ReturnType<typeof buildQuizPlan> {
+  return buildQuizPlan(seed, TRIVIA_POOL_SORTED);
+}
+
+export function prepareQuizIntro(
+  seed: number,
+  sortedPool: readonly QuizQuestion[],
+): GameIntroTimings {
+  const plan = buildQuizPlan(seed, sortedPool);
   return {
     goAtOffsetMs: plan.schedule.openAtOffsets[0] ?? 0,
     deadlineOffsetMs: plan.schedule.closeAtOffsets[plan.schedule.closeAtOffsets.length - 1] ?? 0,
     durationMs: plan.durationMs,
   };
+}
+
+export function prepareTriviaIntro(seed: number): GameIntroTimings {
+  return prepareQuizIntro(seed, TRIVIA_POOL_SORTED);
 }
 
 type Entry = {
@@ -156,56 +189,67 @@ type Entry = {
   speedSum: number;
 };
 
+/**
+ * Pool-agnostic result computation shared by trivia and nonsense. Same input
+ * shape; the only difference between the two games is which `sortedPool` is passed.
+ */
+export function computeQuizResult(
+  input: ComputeResultInput,
+  sortedPool: readonly QuizQuestion[],
+): ReplayPayload {
+  const { seed, players, loserCount, triviaAnswers } = input;
+  const plan = buildQuizPlan(seed, sortedPool);
+  const correctIndices = plan.questions.map((q) => q.correctIndex);
+
+  const entries: Entry[] = players.map((p) => {
+    const answers = triviaAnswers?.[p.playerToken] ?? [];
+    const { cumulative, total } = computeRunningScores(answers, correctIndices);
+    let speedSum = 0;
+    for (let i = 0; i < plan.questions.length; i++) {
+      const ans = answers[i];
+      if (ans && ans.choice === correctIndices[i]) speedSum += ans.atOffsetMs;
+    }
+    return { token: p.playerToken, total, cumulative, speedSum };
+  });
+
+  entries.sort((a, b) => {
+    if (a.total !== b.total) return b.total - a.total; // higher score = better
+    if (a.speedSum !== b.speedSum) return a.speedSum - b.speedSum; // faster = better
+    return a.token < b.token ? -1 : a.token > b.token ? 1 : 0;
+  });
+
+  const ranking = entries.map((e) => e.token);
+  const losers = ranking.slice(-loserCount);
+
+  const scores: Record<string, number[]> = {};
+  for (const e of entries) scores[e.token] = e.cumulative;
+
+  // Pull per-player picks straight from the input answer log (already in
+  // post-shuffle index space). Used by the result-screen "특이점" panel.
+  const picks: Record<string, Array<0 | 1 | 2 | 3 | null>> = {};
+  for (const p of players) {
+    const ans = triviaAnswers?.[p.playerToken] ?? [];
+    picks[p.playerToken] = plan.questions.map((_, i) => ans[i]?.choice ?? null);
+  }
+
+  const data: TriviaReplayData = {
+    schedule: plan.schedule,
+    questions: plan.questions,
+    scores,
+    picks,
+  };
+
+  return {
+    durationMs: plan.durationMs,
+    ranking,
+    losers,
+    data,
+  };
+}
+
 export const triviaServer: GameServerModule = {
   computeResult(input: ComputeResultInput): ReplayPayload {
-    const { seed, players, loserCount, triviaAnswers } = input;
-    const plan = buildTriviaPlan(seed);
-    const correctIndices = plan.questions.map((q) => q.correctIndex);
-
-    const entries: Entry[] = players.map((p) => {
-      const answers = triviaAnswers?.[p.playerToken] ?? [];
-      const { cumulative, total } = computeRunningScores(answers, correctIndices);
-      let speedSum = 0;
-      for (let i = 0; i < plan.questions.length; i++) {
-        const ans = answers[i];
-        if (ans && ans.choice === correctIndices[i]) speedSum += ans.atOffsetMs;
-      }
-      return { token: p.playerToken, total, cumulative, speedSum };
-    });
-
-    entries.sort((a, b) => {
-      if (a.total !== b.total) return b.total - a.total; // higher score = better
-      if (a.speedSum !== b.speedSum) return a.speedSum - b.speedSum; // faster = better
-      return a.token < b.token ? -1 : a.token > b.token ? 1 : 0;
-    });
-
-    const ranking = entries.map((e) => e.token);
-    const losers = ranking.slice(-loserCount);
-
-    const scores: Record<string, number[]> = {};
-    for (const e of entries) scores[e.token] = e.cumulative;
-
-    // Pull per-player picks straight from the input answer log (already in
-    // post-shuffle index space). Used by the result-screen "특이점" panel.
-    const picks: Record<string, Array<0 | 1 | 2 | 3 | null>> = {};
-    for (const p of players) {
-      const ans = triviaAnswers?.[p.playerToken] ?? [];
-      picks[p.playerToken] = plan.questions.map((_, i) => ans[i]?.choice ?? null);
-    }
-
-    const data: TriviaReplayData = {
-      schedule: plan.schedule,
-      questions: plan.questions,
-      scores,
-      picks,
-    };
-
-    return {
-      durationMs: plan.durationMs,
-      ranking,
-      losers,
-      data,
-    };
+    return computeQuizResult(input, TRIVIA_POOL_SORTED);
   },
   prepareIntro({ seed }) {
     return prepareTriviaIntro(seed);

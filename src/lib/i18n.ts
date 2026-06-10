@@ -134,11 +134,13 @@ export const ko = {
     elimination: '탈락 룰렛',
     reaction: '동시탭 반응속도',
     trivia: '일반 상식',
+    nonsense: '넌센스 퀴즈',
     physicsEstimate: (s: number) => `~${s}초 · 물리 기반`,
     cheerEstimate: (s: number) => `~${s}초 · 응원 충전`,
     tiltEstimate: (s: number) => `~${s}초 · 자이로 조작`,
     reactionEstimate: (s: number) => `~${s}초 · 반응 속도`,
     triviaEstimate: (s: number) => `~${s}초 · 상식 퀴즈`,
+    nonsenseEstimate: (s: number) => `~${s}초 · 넌센스 퀴즈`,
   },
   gameIntros: {
     marble: [
@@ -167,6 +169,12 @@ export const ko = {
     ],
     trivia: [
       '4지선다 5문제',
+      '빠르게 맞힐수록 점수↑ · 연속 정답 콤보 보너스',
+      '마지막 문제는 점수 2배 — 끝까지 역전 가능',
+      '점수 낮은 N명이 벌칙',
+    ],
+    nonsense: [
+      '4지선다 5문제 · 말장난과 재치 문제',
       '빠르게 맞힐수록 점수↑ · 연속 정답 콤보 보너스',
       '마지막 문제는 점수 2배 — 끝까지 역전 가능',
       '점수 낮은 N명이 벌칙',
