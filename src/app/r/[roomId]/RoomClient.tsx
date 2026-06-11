@@ -35,6 +35,7 @@ export default function RoomClient({
   const setState = useRoomStore((s) => s.setState);
   const setGameStart = useRoomStore((s) => s.setGameStart);
   const setResult = useRoomStore((s) => s.setResult);
+  const resetStore = useRoomStore((s) => s.reset);
   const state = useRoomStore((s) => s.state);
   const myToken = useRoomStore((s) => s.myToken);
   const gameStart = useRoomStore((s) => s.gameStart);
@@ -101,8 +102,27 @@ export default function RoomClient({
   // Initial wiring: connect socket, listen, attempt join
   useEffect(() => {
     const socket = getSocket();
+    // Server room ids are uppercase (getRoom uppercases lookups); normalize once
+    // so hand-typed lowercase URLs still match `state.id`.
+    const normalizedRoomId = roomId.toUpperCase();
 
-    const onState = (s: PublicRoomState) => setState(s);
+    // The store is a module singleton that survives route changes. If it still
+    // holds another room (back to landing → created a new room), drop it so the
+    // previous room's lobby/game/result don't flash in — or worse, render — here.
+    const held = useRoomStore.getState().state;
+    if (held && held.id !== normalizedRoomId) resetStore();
+
+    const onState = (s: PublicRoomState) => {
+      // A singleton socket can still receive the previous room's broadcasts for a
+      // moment while switching rooms — drop anything not addressed to this room.
+      if (s.id !== normalizedRoomId) return;
+      setState(s);
+      // Restore a missed `game:result` (user was off the room route when the round
+      // ended) — result-status states carry ranking/losers.
+      if (s.status === 'result' && s.currentRound?.ranking && s.currentRound.losers) {
+        setResult({ ranking: s.currentRound.ranking, losers: s.currentRound.losers });
+      }
+    };
     const onGameStart = (g: GameStartPayload) => setGameStart(g);
     const onResult = (r: ResultPayload) => setResult(r);
     const onErr = ({ message }: { code: string; message: string }) => {
@@ -165,7 +185,7 @@ export default function RoomClient({
       socket.off('error', onErr);
       socket.off('connect', onConnect);
     };
-  }, [roomId, forceJoin, fresh, attemptJoin, setMe, setState, setGameStart, setResult]);
+  }, [roomId, forceJoin, fresh, attemptJoin, setMe, setState, setGameStart, setResult, resetStore]);
 
   // Reset the tap-gate whenever a new game begins. Must run before any early
   // return so hook order stays stable across renders.

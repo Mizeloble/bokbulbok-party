@@ -274,6 +274,10 @@ export function publicRoomState(room: RoomState) {
           // Exposed for mid-play reconnects (reaction needs goAt/deadlineAt to render).
           // For marble, `data` is large frame data — only include intro-only payloads.
           replay: shouldExposeReplayData(room) ? room.currentRound.replay.data : undefined,
+          // Result recovery: a client that was off the room route when `game:result`
+          // fired (browser back during the round) rebuilds the result from state alone.
+          ranking: room.status === 'result' ? room.currentRound.replay.ranking : undefined,
+          losers: room.status === 'result' ? room.currentRound.replay.losers : undefined,
         }
       : undefined,
   };
