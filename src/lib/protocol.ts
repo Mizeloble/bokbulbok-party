@@ -28,6 +28,10 @@ export type PublicRoomState = {
     durationMs: number;
     /** Game-specific intro data exposed for mid-play reconnects (e.g. reaction's goAt/deadlineAt). */
     replay?: unknown;
+    /** Present only while status === 'result' — lets a client that missed the
+     * `game:result` broadcast (navigated away mid-round) rebuild the result screen. */
+    ranking?: string[];
+    losers?: string[];
   };
 };
 

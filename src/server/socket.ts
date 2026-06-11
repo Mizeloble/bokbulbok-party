@@ -53,6 +53,17 @@ export function attachSocketHandlers(io: IO) {
       const nickCheck = validateNickname(room, payload.nickname, payload.playerToken);
       if (!nickCheck.ok) return ack(nickCheck);
 
+      // Same socket switching rooms (browser back to landing → new room): leave the
+      // previous socket.io room so its broadcasts stop reaching this client, and mark
+      // the old player record disconnected so grace eviction / empty-room cleanup run.
+      // After validation only — a rejected join must not detach the socket from its
+      // current room.
+      if (currentRoomId && currentRoomId !== room.id) {
+        socket.leave(currentRoomId);
+        const prev = getRoom(currentRoomId);
+        if (prev) detachSocketFromRoom(io, prev, socket.id);
+      }
+
       const player = addPlayer(room, {
         nickname: nickCheck.nickname,
         playerToken: payload.playerToken,
@@ -241,29 +252,39 @@ export function attachSocketHandlers(io: IO) {
     socket.on('disconnect', () => {
       const room = currentRoomId ? getRoom(currentRoomId) : null;
       if (!room) return;
-      const player = findPlayerBySocket(room, socket.id);
-      if (!player) return;
-      player.connected = false;
-      player.socketId = null;
-      if (room.hostSocketId === socket.id) room.hostSocketId = null;
-      io.to(room.id).emit('state', publicRoomState(room));
-
-      // Grace period: drop player if they don't return in time
-      player.graceTimer = setTimeout(() => {
-        if (!player.connected) {
-          room.players.delete(player.playerToken);
-          // Last player gone — delete the room now instead of letting `touch`
-          // push the idle cleanup another IDLE_MS out (would hold a MAX_ROOMS slot).
-          if (room.players.size === 0) {
-            deleteRoom(room.id);
-            return;
-          }
-          touch(room);
-          io.to(room.id).emit('state', publicRoomState(room));
-        }
-      }, ROOM.RECONNECT_GRACE_MS);
+      detachSocketFromRoom(io, room, socket.id);
     });
   });
+}
+
+/**
+ * Mark the player bound to `socketId` as disconnected from `room` and start the
+ * reconnect grace timer. Shared by the `disconnect` handler and the room-switch
+ * path in `join` (same socket joining a different room).
+ */
+function detachSocketFromRoom(io: IO, room: RoomState, socketId: string) {
+  const player = findPlayerBySocket(room, socketId);
+  if (!player) return;
+  player.connected = false;
+  player.socketId = null;
+  if (room.hostSocketId === socketId) room.hostSocketId = null;
+  io.to(room.id).emit('state', publicRoomState(room));
+
+  // Grace period: drop player if they don't return in time
+  if (player.graceTimer) clearTimeout(player.graceTimer);
+  player.graceTimer = setTimeout(() => {
+    if (!player.connected) {
+      room.players.delete(player.playerToken);
+      // Last player gone — delete the room now instead of letting `touch`
+      // push the idle cleanup another IDLE_MS out (would hold a MAX_ROOMS slot).
+      if (room.players.size === 0) {
+        deleteRoom(room.id);
+        return;
+      }
+      touch(room);
+      io.to(room.id).emit('state', publicRoomState(room));
+    }
+  }, ROOM.RECONNECT_GRACE_MS);
 }
 
 // --- charge / round flow ---------------------------------------------------
