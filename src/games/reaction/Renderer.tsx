@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { ko } from '@/lib/i18n';
 import { getSocket } from '@/lib/socket-client';
 import { haptics } from '@/games/marble/haptics';
+import { GAME } from '@/lib/constants';
+import type { ReactionTapAck } from '@/lib/protocol';
 
 type Player = { playerToken: string; nickname: string; color: string };
 
@@ -87,8 +89,22 @@ export function ReactionRenderer({
     if (tapAt > deadlineAt) return; // window closed
 
     haptics.reactionGo();
+    // Local estimate for instant feedback only — the server ack below replaces it
+    // with the recorded offset (the exact number the result screen will show), so
+    // the in-game badge and the final ranking can't disagree by latency/clock skew.
     setMyOffsetMs(Math.max(0, Math.round(tapAt - goAt)));
-    getSocket().emit('reaction:tap');
+    getSocket().emit('reaction:tap', (res: ReactionTapAck) => {
+      if (!res?.recorded) return; // keep the local estimate (ack lost / tap ignored)
+      if (res.offsetMs < GAME.REACTION_MIN_HUMAN_RT_MS) {
+        // Looked fine locally, but arrived under the human-RT floor — the server
+        // will classify it as a false start, so flip the UI to match the ranking.
+        setMyOffsetMs(null);
+        setFalseStartFlash((k) => k + 1);
+        setFalseStartLocked(true);
+        return;
+      }
+      setMyOffsetMs(res.offsetMs);
+    });
   }
 
   const phase: Phase = now < goAt ? 'ready' : now < deadlineAt ? 'go' : 'tabulating';
