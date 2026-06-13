@@ -111,3 +111,11 @@ export const GAME_META = {
 } as const;
 
 export type GameId = keyof typeof GAME_META;
+
+// Quiz-family games share the trivia engine end to end (4-choice quiz,
+// speed+combo scoring, TriviaReplayData replay shape) — only the question pool
+// differs. Server pool selection lives in socket.ts (QUIZ_POOLS); this is the
+// shared membership check for everything else (replay exposure, result UI).
+export function isQuizGame(gameId: GameId): boolean {
+  return gameId === 'trivia' || gameId === 'nonsense';
+}

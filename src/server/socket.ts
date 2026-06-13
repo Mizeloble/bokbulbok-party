@@ -20,17 +20,17 @@ import { NONSENSE_POOL_SORTED } from '../games/nonsense/questions';
 import { computeRunningScores } from '../games/trivia/scoring';
 import { ko } from '../lib/i18n';
 import { GAME, NICKNAME, ROOM } from '../lib/constants';
-import { GAME_META, type GameId } from '../games/types';
+import { GAME_META, isQuizGame, type GameId } from '../games/types';
 import type { TriviaPerPlayerAnswers } from '../games/types';
 
 // Quiz-family games share one engine (4-choice, speed+combo scoring, live standings):
 // trivia and nonsense differ only by question pool. The runner below picks the pool
 // by gameId; the rest of the flow (state, `trivia:*` events) is content-agnostic.
+// Membership check is the shared `isQuizGame` in src/games/types.ts.
 const QUIZ_POOLS: Partial<Record<GameId, readonly QuizQuestion[]>> = {
   trivia: TRIVIA_POOL_SORTED,
   nonsense: NONSENSE_POOL_SORTED,
 };
-const isQuizGame = (gameId: GameId): boolean => gameId in QUIZ_POOLS;
 import type { ClientToServerEvents, ServerToClientEvents } from '../lib/protocol';
 import { mulberry32 } from '../games/reaction/server';
 import { MarbleTiltLiveSim } from '../games/marble-tilt/liveSim';

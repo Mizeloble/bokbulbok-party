@@ -2,7 +2,7 @@ import { newHostToken, newPlayerToken, newRoomId } from '../lib/ids';
 import { ko } from '../lib/i18n';
 import { MARBLE_COLORS, ROOM } from '../lib/constants';
 import type { RoomStatus } from '../lib/protocol';
-import type { GameId } from '../games/types';
+import { isQuizGame, type GameId } from '../games/types';
 import type { MarbleTiltLiveSim } from '../games/marble-tilt/liveSim';
 
 export type { GameId, RoomStatus };
@@ -284,7 +284,7 @@ export function publicRoomState(room: RoomState) {
 }
 
 function shouldExposeReplayData(room: RoomState): boolean {
-  // Only reaction's and trivia's replay.data is small intro-only metadata. Marble's
-  // frames stay out of state broadcasts to keep them light.
-  return room.gameId === 'reaction' || room.gameId === 'trivia';
+  // Only reaction's and the quiz games' replay.data is small intro-only metadata.
+  // Marble's frames stay out of state broadcasts to keep them light.
+  return room.gameId === 'reaction' || isQuizGame(room.gameId);
 }
