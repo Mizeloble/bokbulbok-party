@@ -9,6 +9,7 @@ import { getSocket } from '@/lib/socket-client';
 import { GAME } from '@/lib/constants';
 import type { ReactionReplayData } from '@/games/reaction/server';
 import type { TriviaReplayData } from '@/games/trivia/server';
+import { isQuizGame } from '@/games/types';
 import clsx from 'clsx';
 
 export function ResultScreen({ onReplay }: { onReplay?: () => void } = {}) {
@@ -117,10 +118,11 @@ export function ResultScreen({ onReplay }: { onReplay?: () => void } = {}) {
       : undefined;
   const showReactionMs = !!reactionOffsets && Object.keys(reactionOffsets).length > 0;
 
-  // Trivia game: per-player cumulative score timeline. Last entry = final score.
-  // Empty during the intro broadcast — only populated when the round finishes.
+  // Quiz games (trivia/nonsense): per-player cumulative score timeline. Last entry
+  // = final score. Empty during the intro broadcast — only populated when the
+  // round finishes.
   const triviaScores =
-    state.gameId === 'trivia'
+    isQuizGame(state.gameId)
       ? (state.currentRound?.replay as TriviaReplayData | undefined)?.scores
       : undefined;
   const showTriviaScores = !!triviaScores && Object.keys(triviaScores).length > 0;
@@ -130,7 +132,7 @@ export function ResultScreen({ onReplay }: { onReplay?: () => void } = {}) {
       )
     : undefined;
   const triviaQuestions =
-    state.gameId === 'trivia'
+    isQuizGame(state.gameId)
       ? (state.currentRound?.replay as TriviaReplayData | undefined)?.questions
       : undefined;
 
@@ -292,7 +294,7 @@ export function ResultScreen({ onReplay }: { onReplay?: () => void } = {}) {
           worth teasing about ("4명 다 맞혔는데 한 명만…"). */}
       {triviaQuestions &&
         triviaQuestions.length > 0 &&
-        state.gameId === 'trivia' &&
+        isQuizGame(state.gameId) &&
         (() => {
           const picks =
             (state.currentRound?.replay as TriviaReplayData | undefined)?.picks ?? {};
