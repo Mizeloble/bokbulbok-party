@@ -20,7 +20,7 @@ import { NONSENSE_POOL_SORTED } from '../games/nonsense/questions';
 import { computeRunningScores } from '../games/trivia/scoring';
 import { ko } from '../lib/i18n';
 import { GAME, NICKNAME, ROOM } from '../lib/constants';
-import { GAME_META, isQuizGame, type GameId } from '../games/types';
+import { GAME_META, isLiveGame, isQuizGame, type GameId } from '../games/types';
 import type { TriviaPerPlayerAnswers } from '../games/types';
 
 // Quiz-family games share one engine (4-choice, speed+combo scoring, live standings):
@@ -146,7 +146,7 @@ export function attachSocketHandlers(io: IO) {
       if (room.status === 'charging' || room.status === 'countdown' || room.status === 'playing') return;
 
       const meta = GAME_META[room.gameId];
-      if (room.gameId === 'marble-tilt') {
+      if (isLiveGame(room.gameId)) {
         await runMarbleTiltRound(io, room);
       } else if (meta.needsClientInput) {
         if (isQuizGame(room.gameId)) {
@@ -217,7 +217,7 @@ export function attachSocketHandlers(io: IO) {
 
     socket.on('marble:tilt', ({ x }) => {
       const room = currentRoomId ? getRoom(currentRoomId) : null;
-      if (!room || room.gameId !== 'marble-tilt' || !room.marbleTilt) return;
+      if (!room || !isLiveGame(room.gameId) || !room.marbleTilt) return;
       if (room.status !== 'playing' && room.status !== 'countdown') return;
       if (typeof x !== 'number' || !Number.isFinite(x)) return;
       const player = findPlayerBySocket(room, socket.id);
@@ -230,7 +230,7 @@ export function attachSocketHandlers(io: IO) {
 
     socket.on('marble:boost', () => {
       const room = currentRoomId ? getRoom(currentRoomId) : null;
-      if (!room || room.gameId !== 'marble-tilt' || !room.marbleTilt) return;
+      if (!room || !isLiveGame(room.gameId) || !room.marbleTilt) return;
       if (room.status !== 'playing') return;
       const player = findPlayerBySocket(room, socket.id);
       if (!player) return;
