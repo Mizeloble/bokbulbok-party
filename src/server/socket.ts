@@ -172,19 +172,22 @@ export function attachSocketHandlers(io: IO) {
       if (safe > prev) room.charge.counts.set(player.playerToken, safe);
     });
 
-    socket.on('reaction:tap', () => {
+    socket.on('reaction:tap', (ack) => {
       // Capture arrival time IMMEDIATELY — this is the source of truth for ranking.
       const arrivalAt = Date.now();
       const room = currentRoomId ? getRoom(currentRoomId) : null;
-      if (!room || room.gameId !== 'reaction' || !room.reaction) return;
-      if (room.status !== 'playing') return;
-      if (arrivalAt > room.reaction.deadlineAt) return;
+      if (!room || room.gameId !== 'reaction' || !room.reaction) return ack?.({ recorded: false });
+      if (room.status !== 'playing') return ack?.({ recorded: false });
+      if (arrivalAt > room.reaction.deadlineAt) return ack?.({ recorded: false });
       const player = findPlayerBySocket(room, socket.id);
-      if (!player) return;
+      if (!player) return ack?.({ recorded: false });
       // First tap only — server-authoritative.
-      if (room.reaction.firstTaps.has(player.playerToken)) return;
+      if (room.reaction.firstTaps.has(player.playerToken)) return ack?.({ recorded: false });
       const offset = arrivalAt - room.reaction.goAt;
       room.reaction.firstTaps.set(player.playerToken, offset);
+      // Echo the recorded offset so the renderer can show the same number the
+      // result screen will — client-side estimates drift by latency + clock skew.
+      ack?.({ recorded: true, offsetMs: offset });
     });
 
     socket.on('trivia:answer', ({ qIndex, choice }) => {

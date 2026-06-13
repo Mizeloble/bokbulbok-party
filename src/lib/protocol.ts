@@ -113,6 +113,15 @@ export type MarbleTiltIntro = {
   zoomY: number;
 };
 
+/**
+ * Server ack for `reaction:tap`. `offsetMs` is the offset the server recorded
+ * (arrival − goAt) — the exact number the result screen will later show. The
+ * renderer displays this instead of its local estimate so the in-game badge and
+ * the final ranking can never disagree. `recorded: false` = tap was ignored
+ * (duplicate, outside window, not playing).
+ */
+export type ReactionTapAck = { recorded: true; offsetMs: number } | { recorded: false };
+
 export type ErrorPayload = { code: string; message: string };
 
 export type JoinAck =
@@ -152,8 +161,9 @@ export type ClientToServerEvents = {
   reset: () => void;
   /** Charge phase: client sends cumulative tap count (idempotent). */
   'charge:tick': (payload: { count: number }) => void;
-  /** Reaction game: tap signal. No payload — server uses arrival time as the source of truth. */
-  'reaction:tap': () => void;
+  /** Reaction game: tap signal. No payload — server uses arrival time as the source
+   * of truth and returns the recorded offset via ack (display-only channel). */
+  'reaction:tap': (ack?: (res: ReactionTapAck) => void) => void;
   /** Trivia game: answer for the currently open question. Server uses arrival time, not client timestamps. */
   'trivia:answer': (payload: { qIndex: number; choice: 0 | 1 | 2 | 3 }) => void;
   /** Marble-tilt: client streams normalized X-axis tilt (-1..1) at ~20 Hz while playing. */
