@@ -32,7 +32,7 @@ const QUIZ_POOLS: Partial<Record<GameId, readonly QuizQuestion[]>> = {
   nonsense: NONSENSE_POOL_SORTED,
 };
 import type { ClientToServerEvents, ServerToClientEvents } from '../lib/protocol';
-import { mulberry32 } from '../games/reaction/server';
+import { mulberry32 } from '../lib/rng';
 import { MarbleTiltLiveSim } from '../games/marble-tilt/liveSim';
 
 type IO = IOServer<ClientToServerEvents, ServerToClientEvents>;
