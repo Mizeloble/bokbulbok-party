@@ -8,7 +8,7 @@
 `src/games/CLAUDE.md`와 `src/server/CLAUDE.md`의 "결과는 한 번에 브로드캐스트, 실시간 스트리밍 X" 규칙의 **유일한 예외**다. 이 게임은:
 
 - `computeResult`를 사용하지 않는다 (`server.ts`의 stub은 호출 시 throw).
-- `src/server/rounds/marble-tilt.ts`의 `runMarbleTiltRound`(socket.ts `start` 핸들러가 호출)가 `MarbleTiltLiveSim`을 직접 인스턴스화해서 30 Hz로 위치 틱을 스트리밍한다.
+- `src/server/rounds/marble-tilt.ts`의 `runMarbleTiltRound`(socket.ts `start` 핸들러가 호출)가 `MarbleTiltLiveSim`을 직접 인스턴스화해서 60 Hz(`TICK_HZ`)로 위치 틱을 스트리밍한다.
 - "같은 seed → 같은 결과"가 성립하지 않는다. 플레이어 입력이 결과를 좌우한다.
 - 다시 보기 버튼은 비활성 (재생할 frames가 없음).
 
@@ -16,7 +16,7 @@
 
 ## 구성
 
-- `liveSim.ts` — 60 Hz Box2D 스텝, 30 Hz 외부 emit, 플레이어별 tilt 힘 적용
+- `liveSim.ts` — 60 Hz Box2D 스텝, 60 Hz 외부 emit(`TICK_HZ`), 플레이어별 tilt 힘 적용
 - `Renderer.tsx` — `'marble:tick'` 구독, prev/latest 보간 후 `drawScene` 재사용
 - `useGyro.ts` — DeviceOrientation 권한 + tare + throttle
 - `TiltPermissionGate.tsx` — lobby에서 iOS 권한 제스처 받는 버튼

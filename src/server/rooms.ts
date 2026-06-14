@@ -155,8 +155,10 @@ export function createRoom(): { roomId: string; hostToken: string } {
     lastActivityAt: Date.now(),
   };
   rooms.set(id, room);
-  scheduleCleanup(room);
   if (process.env.NODE_ENV !== 'production') seedDevBots(room);
+  // Start with the short unclaimed-room window; the first live `join` calls
+  // `touch` → `scheduleCleanup`, upgrading it to the normal IDLE_MS lifecycle.
+  scheduleUnclaimedCleanup(room);
   return { roomId: id, hostToken };
 }
 
@@ -166,7 +168,7 @@ export function createRoom(): { roomId: string; hostToken: string } {
 function seedDevBots(room: RoomState) {
   for (const name of ko.dev.botNames) {
     const token = newPlayerToken();
-    const color = MARBLE_COLORS[room.players.size % MARBLE_COLORS.length];
+    const color = pickColor(room);
     room.players.set(token, {
       socketId: null,
       playerToken: token,
@@ -181,6 +183,9 @@ function seedDevBots(room: RoomState) {
 }
 
 export function getRoom(roomId: string): RoomState | undefined {
+  // Defensive: roomId arrives from client payloads. A non-string would throw on
+  // `.toUpperCase()` as an uncaught exception in the socket connection scope.
+  if (typeof roomId !== 'string') return undefined;
   return rooms.get(roomId.toUpperCase());
 }
 
@@ -207,7 +212,7 @@ export function addPlayer(
     existing.nickname = params.nickname;
     return existing;
   }
-  const color = MARBLE_COLORS[room.players.size % MARBLE_COLORS.length];
+  const color = pickColor(room);
   const p: Player = {
     socketId: params.socketId,
     playerToken: token,
@@ -227,6 +232,19 @@ export function findPlayerBySocket(room: RoomState, socketId: string): Player | 
   return undefined;
 }
 
+/**
+ * Pick the lowest unused palette color so removals / rejoins don't hand two
+ * present players the same color — in marble games color is the only way to tell
+ * your marble apart. Past the palette size (>12 players) collisions are
+ * unavoidable, so fall back to join-order cycling.
+ */
+function pickColor(room: RoomState): string {
+  const used = new Set<string>();
+  for (const p of room.players.values()) used.add(p.color);
+  for (const c of MARBLE_COLORS) if (!used.has(c)) return c;
+  return MARBLE_COLORS[room.players.size % MARBLE_COLORS.length];
+}
+
 export function isHostToken(room: RoomState, token: string | null | undefined): boolean {
   return !!token && token === room.hostToken;
 }
@@ -240,13 +258,34 @@ function scheduleCleanup(room: RoomState) {
   if (room.cleanupTimer) clearTimeout(room.cleanupTimer);
   room.cleanupTimer = setTimeout(() => {
     const idleFor = Date.now() - room.lastActivityAt;
-    const empty = [...room.players.values()].every((p) => !p.connected);
+    // "Empty" = no player holds a live socket. Manual/bot players have a null
+    // socketId, so a room of only manual players (host closed their tab) still
+    // counts as empty and gets reaped instead of lingering the full IDLE_MS.
+    const empty = ![...room.players.values()].some((p) => p.socketId !== null);
     if (idleFor >= ROOM.IDLE_MS || empty) {
       deleteRoom(room.id);
     } else {
       scheduleCleanup(room);
     }
   }, ROOM.IDLE_MS);
+}
+
+/**
+ * Short-fuse cleanup for a brand-new room: if no live socket claims it within
+ * UNCLAIMED_MS it's dropped immediately (squatted / abandoned). The first real
+ * `join` calls `touch` → `scheduleCleanup`, replacing this with the normal
+ * IDLE_MS lifecycle.
+ */
+function scheduleUnclaimedCleanup(room: RoomState) {
+  if (room.cleanupTimer) clearTimeout(room.cleanupTimer);
+  room.cleanupTimer = setTimeout(() => {
+    const hasLive = [...room.players.values()].some((p) => p.socketId !== null);
+    if (hasLive) {
+      scheduleCleanup(room);
+    } else {
+      deleteRoom(room.id);
+    }
+  }, ROOM.UNCLAIMED_MS);
 }
 
 export function snapshotPlayers(room: RoomState) {

@@ -18,4 +18,4 @@ export const marbleCheerServer: GameServerModule = {
       data: sim,
     };
   },
-} as unknown as GameServerModule;
+};

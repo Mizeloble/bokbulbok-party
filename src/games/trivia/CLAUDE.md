@@ -6,7 +6,7 @@
 - ranking은 `computeResult` 안에서만 결정. Renderer는 받은 `schedule`/`questions`만 보고 페이즈 분기.
 
 ## 결정성
-- `buildTriviaPlan(seed)` — mulberry32 단일 스트림으로 (1) 풀에서 N문제 비복원 추출, (2) 각 문제 보기 4개 셔플. 같은 seed면 항상 같은 문제·같은 보기 순서.
+- `buildQuizPlan(seed, sortedPool)` — mulberry32 단일 스트림으로 (1) 풀에서 N문제 비복원 추출, (2) 각 문제 보기 4개 셔플. 같은 seed·같은 풀이면 항상 같은 문제·같은 보기 순서.
 - 풀(`TRIVIA_POOL`)은 `id` 사전순(`TRIVIA_POOL_SORTED`)으로 정렬한 뒤 추출. 풀 끝에 새 문제를 추가해도 기존 id의 추출 매핑은 안 깨짐.
 - 동률 tie-break: 점수 DESC → 정답 응답속도 합 ASC → `playerToken` 사전순.
 
@@ -15,7 +15,7 @@
 - 클라이언트 문제 노출/정답 공개는 `replay.data.schedule`(서버 권위) 기반 wall-clock으로 자동 분기.
 
 ## 금기
-- `Math.random()` / `Date.now()`를 `prepareIntro`/`computeResult`/`buildTriviaPlan`에서 호출 금지.
+- `Math.random()` / `Date.now()`를 `prepareIntro`/`computeResult`/`buildQuizPlan`에서 호출 금지.
 - 클라가 보낸 timestamp를 ranking에 직접 반영 금지.
 - `trivia:answer` payload에 timestamp 추가 금지 (스푸핑 방지).
 - Renderer에서 정답 재계산 / 점수 재계산을 ranking에 사용 금지. 서버 ranking이 진실.

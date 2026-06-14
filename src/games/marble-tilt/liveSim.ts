@@ -280,7 +280,10 @@ export class MarbleTiltLiveSim {
       this.timer = null;
     }
     if (this.physics) {
-      // box2d-wasm has no explicit world destructor; we just drop the reference.
+      // Free the box2d world + bodies. The Emscripten module is shared/cached
+      // across sims, so dropping the JS reference alone leaks the whole world's
+      // WASM-heap allocations every round → OOM on a long-lived instance.
+      this.physics.dispose();
       this.physics = null;
     }
     this.tilts.clear();

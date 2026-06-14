@@ -22,6 +22,14 @@ export const ROOM = {
    * VM size + Fly `http_service` connection limits.
    */
   MAX_ROOMS: 10,
+  /**
+   * Grace window for a freshly-created room to be claimed by a live socket
+   * (host page connecting + `join`). A room with no connected player after this
+   * is treated as squatted/abandoned and dropped immediately — without it a
+   * never-joined room would hold a MAX_ROOMS slot for the full IDLE_MS, letting
+   * one IP exhaust global capacity by hammering `POST /api/rooms`.
+   */
+  UNCLAIMED_MS: 90_000,
 } as const;
 
 export const GAME = {
@@ -82,10 +90,29 @@ export const RATE_LIMIT = {
   /**
    * 방 생성(POST /api/rooms) IP별 고정 윈도우 제한. 공개 엔드포인트 스팸/남용 방지.
    * 프로덕션에서만 적용(개발·LAN 테스트는 통과). 한 IP에서 윈도우 안에 정상적으로
-   * 방을 여러 번 여는 경우(재시도·여러 모임)를 막지 않도록 넉넉히 잡음.
+   * 방을 여러 번 여는 경우(재시도·여러 모임)를 막지 않도록 넉넉히 잡되,
+   * MAX_ROOMS보다 낮게 둠 — 한 IP가 한 윈도우 안에 전역 슬롯을 통째로
+   * 소진(스쿼팅 → 모두에게 503)하지 못하게. (never-joined 방 빠른 GC와 함께 동작.)
    */
   ROOM_CREATE_WINDOW_MS: 60_000,
-  ROOM_CREATE_MAX: 10,
+  ROOM_CREATE_MAX: 5,
+} as const;
+
+export const SOCKET_RATE = {
+  /**
+   * 소켓 이벤트 per-connection 고정 윈도우 제한 (남용/플러드 DoS 방지).
+   * HTTP 방생성만 제한돼 있고 소켓 핸들러는 무제한이라, 소켓 하나로 초당 수천 번
+   * emit해 단일 vCPU를 포화시킬 수 있었음. 프로덕션에서만 적용(개발·LAN 테스트 통과).
+   */
+  /** 고빈도 게임 입력(tilt/boost/tap/answer/charge) — 클라 송신 ~20Hz라 여유 있게. */
+  HOT_WINDOW_MS: 1000,
+  HOT_MAX: 40,
+  /** 저빈도 제어 이벤트(join, host 액션, setGameId/setLoserCount, start, reset). */
+  CTRL_WINDOW_MS: 10_000,
+  CTRL_MAX: 40,
+  /** IP별 신규 소켓 연결 레이트(포크밤 방지). 동시 QR 스캔 버스트는 통과하게 넉넉히. */
+  CONNECT_WINDOW_MS: 10_000,
+  CONNECT_MAX: 60,
 } as const;
 
 export const UI = {

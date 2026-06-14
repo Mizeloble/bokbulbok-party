@@ -34,7 +34,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
+  // No maximumScale: locking zoom blocks low-vision users from enlarging quiz
+  // text / rankings (WCAG 1.4.4). Game canvases use `touch-none` where they need
+  // to suppress gestures, so global pinch-zoom doesn't interfere with play.
   viewportFit: 'cover',
   themeColor: '#0b0b10',
 };

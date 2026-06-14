@@ -31,6 +31,11 @@ async function main() {
     cors: { origin: allowedOrigin },
     pingInterval: 20_000,
     pingTimeout: 25_000,
+    // Every legitimate inbound payload is tiny (roomId, 10-char nickname, 24-char
+    // tokens, a single tilt float). The default 1 MB lets a client buffer huge
+    // strings before our length checks run — cap it low. (Outbound marble frames
+    // are unaffected; this bounds inbound only.)
+    maxHttpBufferSize: 8 * 1024,
   });
 
   attachSocketHandlers(io);

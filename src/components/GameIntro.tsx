@@ -20,7 +20,7 @@ export function GameIntro({ gameId }: { gameId: GameId }) {
         <span className="text-[12px] font-bold text-zinc-100">{ko.games[gameId]}</span>
         {meta.needsPreCharge && (
           <span className="ml-1 rounded-md bg-amber-400/15 text-amber-300 px-1.5 py-0.5 text-[11px] font-bold">
-            응원 충전
+            {ko.charge.badge}
           </span>
         )}
       </div>

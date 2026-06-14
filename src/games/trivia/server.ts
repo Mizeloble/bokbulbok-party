@@ -147,11 +147,6 @@ export function buildQuizPlan(
   };
 }
 
-/** Thin trivia-pool wrapper kept for existing callers (socket.ts game:start broadcast). */
-export function buildTriviaPlan(seed: number): ReturnType<typeof buildQuizPlan> {
-  return buildQuizPlan(seed, TRIVIA_POOL_SORTED);
-}
-
 export function prepareQuizIntro(
   seed: number,
   sortedPool: readonly QuizQuestion[],

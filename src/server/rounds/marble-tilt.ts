@@ -6,7 +6,7 @@ import { emitResult, type IO } from './shared';
 /**
  * Live marble race driven by per-player gyroscope tilt input. Unlike `runRound`
  * (which precomputes the entire race deterministically), this runner steps
- * Box2D in real time and streams positions ~30 Hz so tilt forces affect the
+ * Box2D in real time and streams positions ~60 Hz so tilt forces affect the
  * race as it happens.
  *
  * Flow:
