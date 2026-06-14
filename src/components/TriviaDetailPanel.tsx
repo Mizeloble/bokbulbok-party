@@ -112,7 +112,7 @@ export function TriviaDetailPanel({
           {(allRight > 0 || allWrong > 0 || allSkipped > 0) && (
             <div className="px-1 pt-1 text-xs text-zinc-500 text-center">
               {ko.trivia.detailSkippedSummary(allRight, allWrong)}
-              {allSkipped > 0 && ` · ${allSkipped}문제 ${ko.trivia.detailAllNone}`}
+              {allSkipped > 0 && ` · ${ko.trivia.detailAllNoneSummary(allSkipped)}`}
             </div>
           )}
         </div>
@@ -146,7 +146,7 @@ function OutlierCard({
     <div className="rounded-xl bg-zinc-900/80 border border-zinc-800 px-3.5 py-3 text-left">
       <div className="flex items-center gap-2 mb-1.5">
         <span className="text-[11px] font-black uppercase tracking-[0.18em] text-zinc-500 tabular-nums">
-          {ko.trivia.detailQuestionNum(qIndex + 1, 0)}
+          {ko.trivia.detailQuestionNum(qIndex + 1)}
         </span>
         <span className="text-[11px] font-black uppercase tracking-[0.16em] text-amber-400/80">
           {question.category}

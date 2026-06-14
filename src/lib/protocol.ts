@@ -81,7 +81,8 @@ export type ChargeStatePayload = { totals: Record<string, number>; cap: number }
 /**
  * Live tick from the marble-tilt server-authoritative simulation. Unlike the
  * deterministic precompute path used by `marble`/`marble-cheer`, marble-tilt
- * streams positions ~30 Hz so player tilt input can affect the race in real time.
+ * streams positions ~60 Hz (see `TICK_HZ` in liveSim.ts) so player tilt input can
+ * affect the race in real time.
  * `t` is the server tick index, useful for late-frame ordering / interpolation
  * gates. `finished` indices crossed the goal during this tick (one-shot fanfare
  * trigger). `done: true` signals the last tick — no more positions will arrive.
@@ -94,23 +95,6 @@ export type MarbleTiltTickPayload = {
    *  use these for one-shot visual effects (white flash + burst). */
   boosted?: number[];
   done?: boolean;
-};
-
-/**
- * Lite intro payload sent on `game:start` for marble-tilt rounds. Unlike the
- * marble payload (which carries the full pre-computed `frames`), this only
- * carries the static stage data needed to render the world; live positions
- * arrive via `marble:tick`.
- */
-export type MarbleTiltIntro = {
-  /** Static + kinematic entities to draw. Same shape as `SimulationResult.entities`. */
-  entities: unknown;
-  /** playerToken order matching marble indices. */
-  playerOrder: string[];
-  /** box2d coordinate range for camera sizing. */
-  bounds: { minX: number; maxX: number; minY: number; maxY: number };
-  goalY: number;
-  zoomY: number;
 };
 
 /**
@@ -138,7 +122,6 @@ export type RemovePlayerAck =
 
 export type ServerToClientEvents = {
   state: (state: PublicRoomState) => void;
-  joined: (payload: { you: { playerToken: string; isHost: boolean } }) => void;
   error: (payload: ErrorPayload) => void;
   countdown: (payload: CountdownPayload) => void;
   'charge:start': (payload: ChargeStartPayload) => void;

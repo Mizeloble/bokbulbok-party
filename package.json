@@ -1,6 +1,6 @@
 {
   "name": "bokbulbok-party",
-  "version": "2.3.3",
+  "version": "2.4.0",
   "private": false,
   "license": "MIT",
   "author": "Mizeloble (https://github.com/Mizeloble)",
@@ -14,29 +14,31 @@
     "dev": "tsx server.ts",
     "build": "next build",
     "start": "NODE_ENV=production tsx server.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
+    "box2d-wasm": "7.0.0",
+    "clsx": "2.1.1",
+    "nanoid": "5.0.9",
     "next": "16.2.4",
+    "qrcode": "1.5.4",
     "react": "19.2.5",
     "react-dom": "19.2.5",
     "socket.io": "4.8.1",
     "socket.io-client": "4.8.1",
-    "zustand": "5.0.2",
-    "nanoid": "5.0.9",
-    "qrcode": "1.5.4",
-    "box2d-wasm": "7.0.0",
-    "clsx": "2.1.1"
+    "zustand": "5.0.2"
   },
   "devDependencies": {
-    "typescript": "5.7.2",
     "@types/node": "22.10.1",
+    "@types/qrcode": "1.5.5",
     "@types/react": "19.2.1",
     "@types/react-dom": "19.2.1",
-    "@types/qrcode": "1.5.5",
-    "tailwindcss": "3.4.16",
-    "postcss": "8.4.49",
     "autoprefixer": "10.4.20",
-    "tsx": "4.19.2"
+    "postcss": "8.4.49",
+    "tailwindcss": "3.4.16",
+    "tsx": "4.19.2",
+    "typescript": "5.7.2",
+    "vitest": "^2.1.9"
   }
 }

@@ -42,6 +42,9 @@ export default function RoomClient({
   const gameStart = useRoomStore((s) => s.gameStart);
 
   const [phase, setPhase] = useState<'connecting' | 'need-nickname' | 'in-room' | 'error'>('connecting');
+  // Transient connection-lost flag (mobile backgrounding / network blip) — drives a
+  // non-blocking "reconnecting" banner so the screen doesn't silently freeze.
+  const [connectionLost, setConnectionLost] = useState(false);
   const [errMsg, setErrMsg] = useState<string | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [busyJoin, setBusyJoin] = useState(false);
@@ -163,9 +166,16 @@ export default function RoomClient({
       );
     }
     function onConnect() {
+      setConnectionLost(false);
       if (joinedOnceRef.current) rejoinSilently();
     }
+    // Only surface the banner once we've joined — the first connect has its own
+    // "connecting…" screen, and a pre-join drop shouldn't flash a scary banner.
+    function onDisconnect() {
+      if (joinedOnceRef.current) setConnectionLost(true);
+    }
     socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
 
     if (fresh) {
       // Force a brand-new identity (testing with shared-localStorage incognito windows, or
@@ -185,6 +195,7 @@ export default function RoomClient({
       socket.off('game:result', onResult);
       socket.off('error', onErr);
       socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
     };
   }, [roomId, forceJoin, fresh, attemptJoin, setMe, setState, setGameStart, setResult, resetStore]);
 
@@ -264,6 +275,18 @@ export default function RoomClient({
 
   return (
     <>
+      {connectionLost && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed inset-x-0 top-0 z-[60] flex justify-center pointer-events-none pt-[max(env(safe-area-inset-top),8px)]"
+        >
+          <div className="rounded-full bg-rose-500/90 px-4 py-1.5 text-xs font-semibold text-white shadow-lg backdrop-blur-sm">
+            {ko.errors.reconnecting}
+          </div>
+        </div>
+      )}
+
       {state && (state.status === 'lobby' || (!showGame && !showResult && !inCharging)) && (
         <Lobby inviteUrl={inviteUrl} onChangeNickname={() => setPhase('need-nickname')} />
       )}

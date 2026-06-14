@@ -21,6 +21,31 @@ async function loadWasmBinary(): Promise<Uint8Array> {
   return cachedWasmBinary;
 }
 
+// Cache the instantiated Emscripten module across simulations. Previously every
+// `init()` called `Box2DFactory()`, spinning up a fresh WASM module instance that
+// was never freed — so each race leaked a whole module and a long-lived server
+// would OOM (the fairness harness in scripts/ works around this by forking a
+// child per N). Reuse one module and just create/destroy a b2World per sim
+// (`dispose()`); the single-instance server runs sims serially on one event loop,
+// so there's no concurrent-access hazard.
+type Box2DModule = Awaited<ReturnType<typeof Box2DFactory>>;
+let cachedModule: Box2DModule | null = null;
+let modulePromise: Promise<Box2DModule> | null = null;
+async function getBox2D(): Promise<Box2DModule> {
+  if (cachedModule) return cachedModule;
+  // Guard against concurrent first-callers racing two factory inits.
+  if (!modulePromise) {
+    modulePromise =
+      typeof window === 'undefined'
+        ? loadWasmBinary().then((wasmBinary) =>
+            Box2DFactory({ wasmBinary } as unknown as Parameters<typeof Box2DFactory>[0]),
+          )
+        : Box2DFactory();
+  }
+  cachedModule = await modulePromise;
+  return cachedModule;
+}
+
 export class Box2dPhysics {
   private rng: Rng;
   private Box2D!: Awaited<ReturnType<typeof Box2DFactory>>;
@@ -37,20 +62,39 @@ export class Box2dPhysics {
   }
 
   async init(): Promise<void> {
-    if (typeof window === 'undefined') {
-      // Node: feed the WASM binary directly because the bundled loader uses fetch()
-      const wasmBinary = await loadWasmBinary();
-      // box2d-wasm types are a bit lax; the option is supported by the underlying Emscripten module
-      this.Box2D = await Box2DFactory({ wasmBinary } as unknown as Parameters<typeof Box2DFactory>[0]);
-    } else {
-      this.Box2D = await Box2DFactory();
-    }
+    this.Box2D = await getBox2D();
     this.gravity = new this.Box2D.b2Vec2(0, 10);
     this.world = new this.Box2D.b2World(this.gravity);
   }
 
   clear(): void {
     this.clearEntities();
+  }
+
+  /** Free WASM-heap allocations owned by this sim. MUST be called when the sim is
+   *  done (the module is shared/cached, so anything not freed accumulates). The
+   *  b2World destructor frees all bodies/fixtures/shapes attached to it; `gravity`
+   *  is a standalone vec we own. Idempotent. */
+  dispose(): void {
+    if (this.world) {
+      this.free(this.world);
+      this.world = undefined as unknown as Box2D.b2World;
+    }
+    if (this.gravity) {
+      this.free(this.gravity);
+      this.gravity = undefined as unknown as Box2D.b2Vec2;
+    }
+    this.marbleMap = {};
+    this.entities = [];
+    this.deleteCandidates = [];
+  }
+
+  /** Destroy embind objects via the module's free function. box2d-wasm copies
+   *  defs/shapes/vecs into the bodies it builds, so transients can be freed right
+   *  after they're consumed — otherwise each one leaks into the shared module. */
+  private free(...objs: unknown[]): void {
+    const B = this.Box2D as unknown as { destroy(o: unknown): void };
+    for (const o of objs) if (o) B.destroy(o);
   }
 
   clearMarbles(): void {
@@ -87,7 +131,7 @@ export class Box2dPhysics {
       // and rest on them — drop to 0.1 so contacts slide off naturally.
       fixtureDef.set_friction(0.1);
 
-      let shape;
+      let shape: Box2D.b2PolygonShape | Box2D.b2CircleShape | undefined;
       switch (entity.shape.type) {
         case 'box':
           shape = new this.Box2D.b2PolygonShape();
@@ -104,6 +148,7 @@ export class Box2dPhysics {
             const edge = new this.Box2D.b2EdgeShape();
             edge.SetTwoSided(v1, v2);
             body.CreateFixture(edge, 1);
+            this.free(edge, v1, v2);
           }
           break;
         case 'circle':
@@ -115,7 +160,10 @@ export class Box2dPhysics {
       }
 
       body.SetAngularVelocity(entity.props.angularVelocity);
-      body.SetTransform(new this.Box2D.b2Vec2(entity.position.x, entity.position.y), 0);
+      const xf = new this.Box2D.b2Vec2(entity.position.x, entity.position.y);
+      body.SetTransform(xf, 0);
+      this.free(bodyDef, fixtureDef, xf);
+      if (shape) this.free(shape);
       this.entities.push({
         body,
         x: entity.position.x,
@@ -152,7 +200,8 @@ export class Box2dPhysics {
 
     const bodyDef = new this.Box2D.b2BodyDef();
     bodyDef.set_type(this.Box2D.b2_dynamicBody);
-    bodyDef.set_position(new this.Box2D.b2Vec2(x, y));
+    const spawnPos = new this.Box2D.b2Vec2(x, y);
+    bodyDef.set_position(spawnPos);
     // Mild air drag so terminal speed doesn't run away on long drops.
     bodyDef.set_linearDamping(0.05);
     // Kill the "spinning forever in air" look — marbles taper their spin naturally.
@@ -179,6 +228,7 @@ export class Box2dPhysics {
     body.SetAwake(false);
     body.SetEnabled(false);
     this.marbleMap[id] = body;
+    this.free(circleShape, bodyDef, spawnPos, fix);
   }
 
   shakeMarble(id: number): void {
@@ -188,10 +238,11 @@ export class Box2dPhysics {
       // gravity) and keep magnitude small so we nudge the marble loose without
       // flicking it across the screen. rng() is still called twice in the same
       // order so determinism is preserved.
-      body.ApplyLinearImpulseToCenter(
-        new this.Box2D.b2Vec2(this.rng() * 4 - 2, 2 + this.rng() * 3),
-        true,
-      );
+      const ix = this.rng() * 4 - 2;
+      const iy = 2 + this.rng() * 3;
+      const impulse = new this.Box2D.b2Vec2(ix, iy);
+      body.ApplyLinearImpulseToCenter(impulse, true);
+      this.free(impulse);
     }
   }
 
@@ -201,7 +252,9 @@ export class Box2dPhysics {
   applyForceToMarble(id: number, fx: number, fy: number): void {
     const body = this.marbleMap[id];
     if (!body) return;
-    body.ApplyForceToCenter(new this.Box2D.b2Vec2(fx, fy), true);
+    const v = new this.Box2D.b2Vec2(fx, fy);
+    body.ApplyForceToCenter(v, true);
+    this.free(v);
   }
 
   // Used by marble-tilt's boost (tap) mechanic to give a marble an instantaneous
@@ -209,7 +262,9 @@ export class Box2dPhysics {
   applyImpulseToMarble(id: number, ix: number, iy: number): void {
     const body = this.marbleMap[id];
     if (!body) return;
-    body.ApplyLinearImpulseToCenter(new this.Box2D.b2Vec2(ix, iy), true);
+    const v = new this.Box2D.b2Vec2(ix, iy);
+    body.ApplyLinearImpulseToCenter(v, true);
+    this.free(v);
   }
 
   hasMarble(id: number): boolean {

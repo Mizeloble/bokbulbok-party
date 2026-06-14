@@ -14,8 +14,9 @@ import {
   type RoomState,
 } from './rooms';
 import { ko } from '../lib/i18n';
-import { GAME, NICKNAME, ROOM } from '../lib/constants';
-import { GAME_META, isLiveGame, isQuizGame } from '../games/types';
+import { GAME, NICKNAME, ROOM, SOCKET_RATE } from '../lib/constants';
+import { GAME_META, isLiveGame, isQuizGame, type GameId } from '../games/types';
+import { checkRateLimit } from './rate-limit';
 import type { IO } from './rounds/shared';
 import { startChargingPhase } from './rounds/charge';
 import { runRound } from './rounds/standard';
@@ -25,18 +26,42 @@ import { runMarbleTiltRound } from './rounds/marble-tilt';
 
 export function attachSocketHandlers(io: IO) {
   io.on('connection', (socket) => {
+    // Per-IP new-connection rate limit (prod only): one client opening unlimited
+    // sockets is a cheap flood / fork-bomb vector. Bursty simultaneous QR scans at
+    // a single venue stay well under the cap.
+    if (isProd) {
+      const { ok } = checkRateLimit(
+        `conn:${socketIp(socket)}`,
+        SOCKET_RATE.CONNECT_WINDOW_MS,
+        SOCKET_RATE.CONNECT_MAX,
+        Date.now(),
+      );
+      if (!ok) {
+        socket.disconnect(true);
+        return;
+      }
+    }
+
     let currentRoomId: string | null = null;
 
     socket.on('join', (payload, ack) => {
-      const room = getRoom(payload.roomId);
+      if (typeof ack !== 'function') return;
+      if (ctrlLimited(socket)) return ack(err('RATE', ko.errors.roomNotFound));
+      if (!isObj(payload)) return ack(err('BAD_REQ', ko.errors.roomNotFound));
+      const roomId = payload.roomId;
+      if (typeof roomId !== 'string') return ack(err('NO_ROOM', ko.errors.roomNotFound));
+      const playerToken = typeof payload.playerToken === 'string' ? payload.playerToken : undefined;
+      const hostToken = typeof payload.hostToken === 'string' ? payload.hostToken : undefined;
+
+      const room = getRoom(roomId);
       if (!room) return ack(err('NO_ROOM', ko.errors.roomNotFound));
-      if (room.players.size >= GAME.MAX_PLAYERS && !payload.playerToken) {
+      if (room.players.size >= GAME.MAX_PLAYERS && !playerToken) {
         return ack(err('FULL', ko.errors.full));
       }
-      if (room.status !== 'lobby' && room.status !== 'result' && !payload.playerToken) {
+      if (room.status !== 'lobby' && room.status !== 'result' && !playerToken) {
         return ack(err('IN_PROGRESS', ko.errors.inProgress));
       }
-      const nickCheck = validateNickname(room, payload.nickname, payload.playerToken);
+      const nickCheck = validateNickname(room, payload.nickname, playerToken);
       if (!nickCheck.ok) return ack(nickCheck);
 
       // Same socket switching rooms (browser back to landing → new room): leave the
@@ -52,11 +77,11 @@ export function attachSocketHandlers(io: IO) {
 
       const player = addPlayer(room, {
         nickname: nickCheck.nickname,
-        playerToken: payload.playerToken,
+        playerToken,
         socketId: socket.id,
       });
 
-      const isHost = isHostToken(room, payload.hostToken);
+      const isHost = isHostToken(room, hostToken);
       if (isHost) room.hostSocketId = socket.id;
 
       currentRoomId = room.id;
@@ -67,25 +92,32 @@ export function attachSocketHandlers(io: IO) {
 
     socket.on('host:addPlayer', (payload, ack) => {
       const guard = requireHost(currentRoomId, socket);
-      if (!guard.ok) return ack(guard);
+      if (!guard.ok) return ack?.(guard);
+      if (ctrlLimited(socket)) return ack?.(err('RATE', ko.errors.notHost));
+      if (!isObj(payload)) return ack?.(err('BAD_REQ', ko.errors.badNick));
       const { room } = guard;
 
       if (room.status !== 'lobby' && room.status !== 'result') {
-        return ack(err('BAD_STATE', ko.errors.badStateAdd));
+        return ack?.(err('BAD_STATE', ko.errors.badStateAdd));
       }
-      if (room.players.size >= GAME.MAX_PLAYERS) return ack(err('FULL', ko.errors.full));
+      if (room.players.size >= GAME.MAX_PLAYERS) return ack?.(err('FULL', ko.errors.full));
 
       const nickCheck = validateNickname(room, payload.nickname);
-      if (!nickCheck.ok) return ack(nickCheck);
+      if (!nickCheck.ok) return ack?.(nickCheck);
 
       const player = addPlayer(room, { nickname: nickCheck.nickname, socketId: null, manual: true });
       io.to(room.id).emit('state', publicRoomState(room));
-      ack({ ok: true, playerToken: player.playerToken });
+      ack?.({ ok: true, playerToken: player.playerToken });
     });
 
-    socket.on('host:removePlayer', ({ playerToken }, ack) => {
+    socket.on('host:removePlayer', (payload, ack) => {
       const guard = requireHost(currentRoomId, socket);
       if (!guard.ok) return ack?.(guard);
+      if (ctrlLimited(socket)) return ack?.(err('RATE', ko.errors.notHost));
+      if (!isObj(payload) || typeof payload.playerToken !== 'string') {
+        return ack?.(err('NO_PLAYER', ko.errors.noPlayer));
+      }
+      const { playerToken } = payload;
       const { room } = guard;
 
       if (room.status !== 'lobby' && room.status !== 'result') {
@@ -102,22 +134,26 @@ export function attachSocketHandlers(io: IO) {
       ack?.({ ok: true });
     });
 
-    socket.on('setLoserCount', ({ count }) => {
+    socket.on('setLoserCount', (payload) => {
       const guard = requireHost(currentRoomId, socket);
       if (!guard.ok) return;
+      if (ctrlLimited(socket)) return;
+      if (!isObj(payload) || typeof payload.count !== 'number' || !Number.isFinite(payload.count)) return;
       const { room } = guard;
       if (room.status !== 'lobby' && room.status !== 'result') return;
-      room.loserCount = clamp(Math.floor(count), GAME.LOSER_COUNT_MIN, GAME.LOSER_COUNT_MAX);
+      room.loserCount = clamp(Math.floor(payload.count), GAME.LOSER_COUNT_MIN, GAME.LOSER_COUNT_MAX);
       touch(room);
       io.to(room.id).emit('state', publicRoomState(room));
     });
 
-    socket.on('setGameId', ({ gameId }) => {
+    socket.on('setGameId', (payload) => {
       const guard = requireHost(currentRoomId, socket);
       if (!guard.ok) return;
+      if (ctrlLimited(socket)) return;
+      if (!isObj(payload) || !isValidGameId(payload.gameId)) return;
       const { room } = guard;
       if (room.status !== 'lobby' && room.status !== 'result') return;
-      room.gameId = gameId;
+      room.gameId = payload.gameId;
       touch(room);
       io.to(room.id).emit('state', publicRoomState(room));
     });
@@ -125,6 +161,7 @@ export function attachSocketHandlers(io: IO) {
     socket.on('start', async () => {
       const guard = requireHost(currentRoomId, socket);
       if (!guard.ok) return;
+      if (ctrlLimited(socket)) return;
       const { room } = guard;
 
       const connectedPlayers = [...room.players.values()].filter((p) => p.connected);
@@ -147,12 +184,14 @@ export function attachSocketHandlers(io: IO) {
       }
     });
 
-    socket.on('charge:tick', ({ count }) => {
+    socket.on('charge:tick', (payload) => {
+      if (hotLimited(socket, 'charge')) return;
       const room = currentRoomId ? getRoom(currentRoomId) : null;
       if (!room || room.status !== 'charging' || !room.charge) return;
+      if (!isObj(payload) || typeof payload.count !== 'number' || !Number.isFinite(payload.count)) return;
       const player = findPlayerBySocket(room, socket.id);
       if (!player) return;
-      const safe = Math.max(0, Math.min(GAME.CHARGE_TAP_CAP, Math.floor(count)));
+      const safe = Math.max(0, Math.min(GAME.CHARGE_TAP_CAP, Math.floor(payload.count)));
       const prev = room.charge.counts.get(player.playerToken) ?? 0;
       // Idempotent: client sends cumulative count, we keep the maximum.
       if (safe > prev) room.charge.counts.set(player.playerToken, safe);
@@ -161,6 +200,7 @@ export function attachSocketHandlers(io: IO) {
     socket.on('reaction:tap', (ack) => {
       // Capture arrival time IMMEDIATELY — this is the source of truth for ranking.
       const arrivalAt = Date.now();
+      if (hotLimited(socket, 'tap')) return ack?.({ recorded: false });
       const room = currentRoomId ? getRoom(currentRoomId) : null;
       if (!room || room.gameId !== 'reaction' || !room.reaction) return ack?.({ recorded: false });
       if (room.status !== 'playing') return ack?.({ recorded: false });
@@ -176,12 +216,15 @@ export function attachSocketHandlers(io: IO) {
       ack?.({ recorded: true, offsetMs: offset });
     });
 
-    socket.on('trivia:answer', ({ qIndex, choice }) => {
+    socket.on('trivia:answer', (payload) => {
       // Capture arrival time IMMEDIATELY — server-arrival is the truth for tiebreak.
       const arrivalAt = Date.now();
+      if (hotLimited(socket, 'answer')) return;
       const room = currentRoomId ? getRoom(currentRoomId) : null;
       if (!room || !isQuizGame(room.gameId) || !room.trivia) return;
       if (room.status !== 'playing') return;
+      if (!isObj(payload)) return;
+      const { qIndex, choice } = payload;
       if (typeof qIndex !== 'number' || !Number.isInteger(qIndex)) return;
       if (qIndex < 0 || qIndex >= room.trivia.openAts.length) return;
       if (choice !== 0 && choice !== 1 && choice !== 2 && choice !== 3) return;
@@ -201,20 +244,22 @@ export function attachSocketHandlers(io: IO) {
       room.trivia.shortCircuitFromAnswer(qIndex);
     });
 
-    socket.on('marble:tilt', ({ x }) => {
+    socket.on('marble:tilt', (payload) => {
+      if (hotLimited(socket, 'tilt')) return;
       const room = currentRoomId ? getRoom(currentRoomId) : null;
       if (!room || !isLiveGame(room.gameId) || !room.marbleTilt) return;
       if (room.status !== 'playing' && room.status !== 'countdown') return;
-      if (typeof x !== 'number' || !Number.isFinite(x)) return;
+      if (!isObj(payload) || typeof payload.x !== 'number' || !Number.isFinite(payload.x)) return;
       const player = findPlayerBySocket(room, socket.id);
       if (!player) return;
       // Clamp on receive — clients cap at 1 but a misbehaving / spoofed client
       // shouldn't be able to multiply tilt force by an arbitrary factor.
-      const clamped = Math.max(-1, Math.min(1, x));
+      const clamped = Math.max(-1, Math.min(1, payload.x));
       room.marbleTilt.sim.setTilt(player.playerToken, clamped);
     });
 
     socket.on('marble:boost', () => {
+      if (hotLimited(socket, 'boost')) return;
       const room = currentRoomId ? getRoom(currentRoomId) : null;
       if (!room || !isLiveGame(room.gameId) || !room.marbleTilt) return;
       if (room.status !== 'playing') return;
@@ -227,6 +272,7 @@ export function attachSocketHandlers(io: IO) {
     socket.on('reset', () => {
       const guard = requireHost(currentRoomId, socket);
       if (!guard.ok) return;
+      if (ctrlLimited(socket)) return;
       const { room } = guard;
       clearCharge(room);
       clearReaction(room);
@@ -278,10 +324,60 @@ function detachSocketFromRoom(io: IO, room: RoomState, socketId: string) {
 
 // --- helpers ---------------------------------------------------------------
 
+const isProd = process.env.NODE_ENV === 'production';
+
 type Failure = { ok: false; code: string; message: string };
 
 function err(code: string, message: string): Failure {
   return { ok: false, code, message };
+}
+
+// Runtime-only guard (NOT a type predicate): the protocol types payloads as
+// well-formed, but Socket.IO does no validation — a hostile client can send null
+// or a primitive. We keep the declared types intact and just reject non-objects.
+function isObj(v: unknown): boolean {
+  return typeof v === 'object' && v !== null;
+}
+
+function isValidGameId(v: unknown): v is GameId {
+  return typeof v === 'string' && v in GAME_META && GAME_META[v as GameId].enabled;
+}
+
+/** Resolve the real client IP for per-IP connection limiting (Fly → XFF → socket). */
+function socketIp(socket: Socket): string {
+  const h = socket.handshake.headers;
+  const fly = h['fly-client-ip'];
+  if (typeof fly === 'string' && fly) return fly;
+  const xff = h['x-forwarded-for'];
+  if (typeof xff === 'string' && xff) return xff.split(',')[0].trim();
+  return socket.handshake.address || 'unknown';
+}
+
+/**
+ * Per-socket flood guard (prod only). Hot gameplay inputs (tilt/boost/tap/answer/
+ * charge) are unbounded otherwise — one socket could emit thousands/sec and
+ * saturate the single shared vCPU. Keyed per (socket, event) so each input type
+ * gets its own budget. Dev/LAN testing is never throttled.
+ */
+function hotLimited(socket: Socket, event: string): boolean {
+  if (!isProd) return false;
+  return !checkRateLimit(
+    `hot:${socket.id}:${event}`,
+    SOCKET_RATE.HOT_WINDOW_MS,
+    SOCKET_RATE.HOT_MAX,
+    Date.now(),
+  ).ok;
+}
+
+/** Per-socket limit for low-frequency control events (join, host actions, setGameId/setLoserCount, start, reset). */
+function ctrlLimited(socket: Socket): boolean {
+  if (!isProd) return false;
+  return !checkRateLimit(
+    `ctrl:${socket.id}`,
+    SOCKET_RATE.CTRL_WINDOW_MS,
+    SOCKET_RATE.CTRL_MAX,
+    Date.now(),
+  ).ok;
 }
 
 /**

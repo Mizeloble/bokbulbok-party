@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ko } from '@/lib/i18n';
+import { useModalA11y } from './useModalA11y';
 
 export function JoinModal({
   defaultNickname,
@@ -17,11 +18,22 @@ export function JoinModal({
   const [value, setValue] = useState(defaultNickname ?? '');
   const trimmed = value.trim();
   const valid = trimmed.length >= 1 && trimmed.length <= 10;
+  // No onClose: joining is a required gate, not dismissible (no Escape close).
+  const panelRef = useModalA11y();
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="w-full sm:max-w-sm bg-zinc-900 rounded-t-3xl sm:rounded-3xl p-6 space-y-4">
-        <h2 className="text-xl font-bold">{ko.join.title}</h2>
+    <div
+      className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="join-modal-title"
+    >
+      <div
+        ref={panelRef}
+        tabIndex={-1}
+        className="w-full sm:max-w-sm bg-zinc-900 rounded-t-3xl sm:rounded-3xl p-6 space-y-4 focus:outline-none"
+      >
+        <h2 id="join-modal-title" className="text-xl font-bold">{ko.join.title}</h2>
         <input
           autoFocus
           inputMode="text"

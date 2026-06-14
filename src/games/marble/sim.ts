@@ -121,7 +121,22 @@ export async function simulateRace(
 
   const physics = new Box2dPhysics(rng);
   await physics.init();
+  try {
+    return await runSimulation(physics, players, rng, tieRng, chargeRatios);
+  } finally {
+    // Free the world + all WASM-heap allocations — the box2d module is shared
+    // across sims, so skipping this leaks a full race's bodies every round.
+    physics.dispose();
+  }
+}
 
+async function runSimulation(
+  physics: Box2dPhysics,
+  players: { playerToken: string }[],
+  rng: () => number,
+  tieRng: () => number,
+  chargeRatios?: Record<string, number>,
+): Promise<SimulationResult> {
   const stage = stages[0];
   physics.createStage(stage);
 
@@ -215,6 +230,12 @@ export async function simulateRace(
     // Stop as soon as N-1 finish — the loser is mathematically decided at that moment,
     // and watching them crawl across the line afterward is anticlimactic.
     if (finishedSet.size >= players.length - 1) break;
+
+    // Yield to the event loop once per simulated second. The whole sim is a tight
+    // synchronous CPU loop (hundreds of ms for a full race); without this it blocks
+    // every other room's ticks/joins/pings on the single shared vCPU. Determinism
+    // is unaffected — interleaving I/O doesn't touch the physics state.
+    if (frameIdx % FPS === 0) await new Promise<void>((resolve) => setImmediate(resolve));
   }
 
   // Stragglers ranked by how far they got (higher y = closer to goal). With the

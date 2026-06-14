@@ -108,6 +108,7 @@ export const ko = {
   errors: {
     generic: '문제가 생겼어요',
     connecting: '연결 중…',
+    reconnecting: '연결이 끊겼어요 · 다시 연결 중…',
     backToHome: '처음으로',
     roomNotFound: '방을 찾을 수 없어요',
     raceInProgress: '이미 진행 중인 게임이 있어요',
@@ -187,6 +188,8 @@ export const ko = {
     ],
   },
   charge: {
+    /** Lobby GameIntro badge for pre-charge games (no trailing "!"). */
+    badge: '응원 충전',
     title: '응원 충전!',
     subtitle: '5초 안에 미친듯이 탭하세요',
     tapHint: '탭!',
@@ -258,11 +261,12 @@ export const ko = {
     detailWrong: '오답',
     detailNoAnswer: '미응답',
     detailNoteLabel: '💡',
-    detailQuestionNum: (n: number, total: number) => `Q${n}`,
+    detailQuestionNum: (n: number) => `Q${n}`,
     detailHighlightHits: (right: number, total: number) => `${right}/${total} 정답`,
     detailAllRight: '모두 정답!',
     detailAllWrong: '모두 오답…',
     detailAllNone: '모두 미응답',
+    detailAllNoneSummary: (n: number) => `${n}문제 모두 미응답`,
     detailNobodyAnswered: '아무도 못 맞힘',
     detailSkippedSummary: (allRight: number, allWrong: number) => {
       if (allRight && allWrong) return `+ ${allRight}문제 모두 정답 · ${allWrong}문제 모두 오답`;
