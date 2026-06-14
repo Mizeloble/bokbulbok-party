@@ -1,4 +1,4 @@
-import { mulberry32 } from './rng';
+import { mulberry32 } from '../../lib/rng';
 import { Box2dPhysics } from './lazygyu/physics';
 import { stages } from './lazygyu/maps';
 import type { MapEntityState } from './lazygyu/MapEntity';

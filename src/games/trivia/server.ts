@@ -1,6 +1,7 @@
 import type { ReplayPayload } from '../../server/rooms';
 import type { ComputeResultInput, GameIntroTimings, GameServerModule } from '../types';
 import { GAME } from '../../lib/constants';
+import { mulberry32 } from '../../lib/rng';
 import { TRIVIA_POOL_SORTED } from './questions';
 import { computeRunningScores } from './scoring';
 
@@ -62,19 +63,6 @@ export type TriviaReplayData = {
    */
   picks: Record<string, Array<0 | 1 | 2 | 3 | null>>;
 };
-
-// Mulberry32 — small fast deterministic PRNG. Same one reaction uses; copying instead
-// of importing because it's seed-only and keeping games independent of each other.
-function mulberry32(seed: number) {
-  let t = seed >>> 0;
-  return () => {
-    t = (t + 0x6d2b79f5) >>> 0;
-    let r = t;
-    r = Math.imul(r ^ (r >>> 15), r | 1);
-    r ^= r + Math.imul(r ^ (r >>> 7), r | 61);
-    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 function pickQuestions(
   rng: () => number,

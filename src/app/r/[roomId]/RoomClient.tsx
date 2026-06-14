@@ -18,6 +18,7 @@ import { ReactionRenderer } from '@/games/reaction/Renderer';
 import type { ReactionReplayData } from '@/games/reaction/server';
 import { TriviaRenderer } from '@/games/trivia/Renderer';
 import type { TriviaReplayData } from '@/games/trivia/server';
+import { isLiveGame } from '@/games/types';
 import { ROOM, UI } from '@/lib/constants';
 import type { JoinAck } from '@/lib/protocol';
 
@@ -238,7 +239,7 @@ export default function RoomClient({
   // marble and marble-cheer share the same renderer (same SimulationResult shape).
   const isMarbleLikeGame =
     !!gameStart && (gameStart.gameId === 'marble' || gameStart.gameId === 'marble-cheer');
-  const isMarbleTiltGame = !!gameStart && gameStart.gameId === 'marble-tilt';
+  const isMarbleTiltGame = !!gameStart && isLiveGame(gameStart.gameId);
   const isReactionGame = !!gameStart && gameStart.gameId === 'reaction';
   // trivia and nonsense share the same renderer/replay shape (4-choice quiz engine).
   const isQuizGame =

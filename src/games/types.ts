@@ -119,3 +119,13 @@ export type GameId = keyof typeof GAME_META;
 export function isQuizGame(gameId: GameId): boolean {
   return gameId === 'trivia' || gameId === 'nonsense';
 }
+
+// Live games stream positions in real time from a bespoke runner (marble-tilt's
+// MarbleTiltLiveSim) instead of the standard precomputed `computeResult` replay.
+// They have no replayable frames, so result screens hide the "다시 보기" action
+// and reconnects rely on the live `marble:tick` stream. Centralized here because
+// the same `=== 'marble-tilt'` magic string was duplicated across socket handlers,
+// the room client, and the lobby.
+export function isLiveGame(gameId: GameId): boolean {
+  return gameId === 'marble-tilt';
+}

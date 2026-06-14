@@ -9,7 +9,7 @@
 // Lifetime: created in `runMarbleTiltRound()` (src/server/socket.ts), held on
 // `room.marbleTilt`, disposed via `clearMarbleTilt()` on round end / reset / disconnect.
 
-import { mulberry32 } from '../marble/rng';
+import { mulberry32 } from '../../lib/rng';
 import { Box2dPhysics } from '../marble/lazygyu/physics';
 import { stages } from '../marble/lazygyu/maps';
 import { spawnMarbles } from '../marble/sim';
