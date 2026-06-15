@@ -11,7 +11,7 @@ import { getSocket } from '@/lib/socket-client';
 import { GAME } from '@/lib/constants';
 import type { ReactionReplayData } from '@/games/reaction/server';
 import type { TriviaReplayData } from '@/games/trivia/server';
-import { isQuizGame } from '@/games/types';
+import { gameCategory, isQuizGame } from '@/games/types';
 import clsx from 'clsx';
 
 export function ResultScreen({ onReplay }: { onReplay?: () => void } = {}) {
@@ -43,7 +43,7 @@ export function ResultScreen({ onReplay }: { onReplay?: () => void } = {}) {
   // Reaction game: pull per-player tap offsets from the post-round state broadcast.
   // Empty during the intro broadcast — only populated when the round finishes.
   const reactionOffsets =
-    state.gameId === 'reaction'
+    gameCategory(state.gameId) === 'reaction'
       ? (state.currentRound?.replay as ReactionReplayData | undefined)?.offsets
       : undefined;
   const showReactionMs = !!reactionOffsets && Object.keys(reactionOffsets).length > 0;

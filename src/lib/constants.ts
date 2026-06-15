@@ -17,9 +17,9 @@ export const ROOM = {
    * NOTE: this does NOT bound hosting cost. Fly bills machine *started-seconds*,
    * not room count — cost ≈ how long the VM stays awake (sporadic all-day
    * traffic + auto-stop cooldown can keep it up most of the workday). Cost
-   * levers are VM size / uptime, not this number. Kept small (10) on purpose:
-   * an internal tool serving a handful of simultaneous rooms; raise only with
-   * VM size + Fly `http_service` connection limits.
+   * levers are VM size / uptime, not this number. Kept small (10) on purpose
+   * for the current single small VM; raise only together with VM size + Fly
+   * `http_service` connection limits as public traffic grows.
    */
   MAX_ROOMS: 10,
   /**

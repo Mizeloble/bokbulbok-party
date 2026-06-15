@@ -2,7 +2,7 @@ import { newHostToken, newPlayerToken, newRoomId } from '../lib/ids';
 import { ko } from '../lib/i18n';
 import { MARBLE_COLORS, ROOM } from '../lib/constants';
 import type { RoomStatus } from '../lib/protocol';
-import { isQuizGame, type GameId } from '../games/types';
+import { exposesReplayData, type GameId } from '../games/types';
 import type { MarbleTiltLiveSim } from '../games/marble-tilt/liveSim';
 
 export type { GameId, RoomStatus };
@@ -312,7 +312,7 @@ export function publicRoomState(room: RoomState) {
           durationMs: room.currentRound.replay.durationMs,
           // Exposed for mid-play reconnects (reaction needs goAt/deadlineAt to render).
           // For marble, `data` is large frame data — only include intro-only payloads.
-          replay: shouldExposeReplayData(room) ? room.currentRound.replay.data : undefined,
+          replay: exposesReplayData(room.gameId) ? room.currentRound.replay.data : undefined,
           // Result recovery: a client that was off the room route when `game:result`
           // fired (browser back during the round) rebuilds the result from state alone.
           ranking: room.status === 'result' ? room.currentRound.replay.ranking : undefined,
@@ -320,10 +320,4 @@ export function publicRoomState(room: RoomState) {
         }
       : undefined,
   };
-}
-
-function shouldExposeReplayData(room: RoomState): boolean {
-  // Only reaction's and the quiz games' replay.data is small intro-only metadata.
-  // Marble's frames stay out of state broadcasts to keep them light.
-  return room.gameId === 'reaction' || isQuizGame(room.gameId);
 }

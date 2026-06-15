@@ -1,5 +1,5 @@
 import type { ReplayPayload } from '../../server/rooms';
-import type { ComputeResultInput, GameIntroTimings, GameServerModule } from '../types';
+import type { ComputeResultInput, GameServerModule } from '../types';
 import { GAME } from '../../lib/constants';
 import { mulberry32 } from '../../lib/rng';
 import { TRIVIA_POOL_SORTED } from './questions';
@@ -98,9 +98,9 @@ function shuffleChoices(
 
 /**
  * Build the complete intro/replay schedule from a seed. Pure — no Date.now / global RNG.
- * Used both by `prepareIntro` (for socket.ts to broadcast intro timings) and by
- * `computeResult` (so the same payload can be reconstructed at result time without
- * any state leaking through).
+ * The quiz round (`rounds/quiz.ts`) calls this directly to ship the schedule in the
+ * `game:start` replay; `computeResult` rebuilds the same payload at result time so no
+ * state leaks through.
  *
  * Determinism: a single rng stream consumed in fixed order — pickQuestions first,
  * then per-question shuffleChoices. Add new rng consumers only at the end to keep
@@ -145,22 +145,6 @@ export function buildQuizPlan(
     schedule: { openAtOffsets, closeAtOffsets },
     durationMs,
   };
-}
-
-export function prepareQuizIntro(
-  seed: number,
-  sortedPool: readonly QuizQuestion[],
-): GameIntroTimings {
-  const plan = buildQuizPlan(seed, sortedPool);
-  return {
-    goAtOffsetMs: plan.schedule.openAtOffsets[0] ?? 0,
-    deadlineOffsetMs: plan.schedule.closeAtOffsets[plan.schedule.closeAtOffsets.length - 1] ?? 0,
-    durationMs: plan.durationMs,
-  };
-}
-
-export function prepareTriviaIntro(seed: number): GameIntroTimings {
-  return prepareQuizIntro(seed, TRIVIA_POOL_SORTED);
 }
 
 type Entry = {
@@ -234,7 +218,6 @@ export const triviaServer: GameServerModule = {
   computeResult(input: ComputeResultInput): ReplayPayload {
     return computeQuizResult(input, TRIVIA_POOL_SORTED);
   },
-  prepareIntro({ seed }) {
-    return prepareTriviaIntro(seed);
-  },
+  // No prepareIntro: the quiz round bakes the schedule into the game:start replay
+  // directly (see rounds/quiz.ts), so it never goes through prepareGameIntro.
 };
