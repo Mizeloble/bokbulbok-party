@@ -15,7 +15,7 @@
 - 클라이언트 문제 노출/정답 공개는 `replay.data.schedule`(서버 권위) 기반 wall-clock으로 자동 분기.
 
 ## 금기
-- `Math.random()` / `Date.now()`를 `prepareIntro`/`computeResult`/`buildQuizPlan`에서 호출 금지.
+- `Math.random()` / `Date.now()`를 `computeResult`/`buildQuizPlan`에서 호출 금지.
 - 클라가 보낸 timestamp를 ranking에 직접 반영 금지.
 - `trivia:answer` payload에 timestamp 추가 금지 (스푸핑 방지).
 - Renderer에서 정답 재계산 / 점수 재계산을 ranking에 사용 금지. 서버 ranking이 진실.
