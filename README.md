@@ -21,7 +21,7 @@
 
 호스트가 방을 열고 QR 코드를 띄우면 다른 사람들이 폰 카메라로 스캔해서 입장 → 게임 한 판 → 꼴찌가 벌칙 🎯.
 
-- **상태**: 마블 / 응원 마블 / 반응속도 / 일반 상식 퀴즈 활성. 슬롯·탈락 룰렛은 후속.
+- **상태**: 마블 / 응원 마블 / 기울임 마블 / 반응속도 / 일반 상식 퀴즈 / 넌센스 퀴즈 활성. 슬롯·탈락 룰렛은 후속.
 
 ## 게임
 
@@ -29,8 +29,10 @@
 | --- | --- | --- | --- |
 | 🏁 marble | 마블 레이스 | ~35초 | **활성** |
 | 📣 marble-cheer | 응원 마블 레이스 | ~40초 | **활성** — 시작 전 5초 탭 충전이 마블 물리에 미세 반영 |
+| 📱 marble-tilt | 기울임 마블 | ~35초 | **활성** — 폰을 좌우로 기울여 내 구슬 조작, 부스트 버튼 3회 (자이로) |
 | ⚡ reaction | 동시탭 반응속도 | ~8초 | **활성** — 회색 "준비…" → 노란 "지금!" 동시 탭, 가장 빠른 사람이 1등 |
 | 🧠 trivia | 일반 상식 퀴즈 | ~30초 | **활성** — 4지선다 5문제, 속도·콤보 보너스, 마지막 문제 점수 2배 |
+| 🤪 nonsense | 넌센스 퀴즈 | ~30초 | **활성** — trivia 엔진 공유, 말장난·재치 문제 풀 (300+문항) |
 | 🎰 slot | 슬롯머신 룰렛 | ~8초 | 비활성 |
 | 🎯 elimination | 탈락 룰렛 | ~20초 | 비활성 |
 
@@ -106,8 +108,10 @@ fly deploy
 - [`src/games/`](src/games/CLAUDE.md) — GameModule 인터페이스, 새 게임 추가 순서
 - [`src/games/marble/`](src/games/marble/CLAUDE.md) — 마블 시뮬·렌더, lazygyu 출처
 - [`src/games/marble-cheer/`](src/games/marble-cheer/CLAUDE.md) — 응원 충전 변형 (sim 공유)
+- [`src/games/marble-tilt/`](src/games/marble-tilt/CLAUDE.md) — 기울임 마블, 자이로 라이브 입력·전용 러너
 - [`src/games/reaction/`](src/games/reaction/CLAUDE.md) — 반응속도, 서버 도착 시각만 진실
 - [`src/games/trivia/`](src/games/trivia/CLAUDE.md) — 트리비아, 결정성·답변 윈도우·문제 풀 추가 규칙
+- [`src/games/nonsense/`](src/games/nonsense/CLAUDE.md) — 넌센스 퀴즈, trivia 엔진 공유·문제 풀만 다름
 - [`src/components/`](src/components/CLAUDE.md) — 모바일 UI 규약, amber 위계
 - [`src/app/`](src/app/CLAUDE.md) — App Router 구조
 
