@@ -127,6 +127,15 @@ export const ko = {
     close: '닫기',
     copied: '복사됨 ✓',
   },
+  // 결과 화면 → 단톡방으로 들고 나가는 공유 카드(클라이언트 캔버스 렌더).
+  share: {
+    button: '결과 공유',
+    preparing: '준비 중…',
+    saved: '이미지 저장됨 ✓',
+    failed: '공유 실패 · 다시 시도',
+    cardSub: '오늘 벌칙 당첨 🎯',
+    shareText: '복불복에서 오늘의 벌칙을 정했어요 🎯',
+  },
   games: {
     marble: '마블 레이스',
     'marble-cheer': '응원 마블 레이스',
