@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ko } from '@/lib/i18n';
 import { useRoomStore } from '@/store/room-store';
 import { AdSlot } from './AdSlot';
+import { ResultShareButton } from './ResultShareButton';
 import { TriviaDetailPanel } from './TriviaDetailPanel';
 import { useConfetti } from './useConfetti';
 import { getSocket } from '@/lib/socket-client';
@@ -116,6 +117,9 @@ export function ResultScreen({ onReplay }: { onReplay?: () => void } = {}) {
         >
           {iLost ? ko.result.youLost : ko.result.youWon}
         </div>
+
+        {/* 결과 카드 공유 — 호스트·게스트 공통. 단톡방으로 들고 나가는 바이럴 고리 */}
+        <ResultShareButton losers={losers} />
 
         {/* Bottom actions — host primary grid vs guest secondary row */}
         {isHost ? (
