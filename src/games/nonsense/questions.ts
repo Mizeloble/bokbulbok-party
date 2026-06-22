@@ -105,10 +105,10 @@ export const NONSENSE_POOL: readonly NonsenseQuestion[] = [
   {
     id: 'pun-burger-color',
     category: '말장난',
-    question: '햄버거의 색깔은?',
-    choices: ['갈색', '노랑', '버건디', '빨강'],
-    correctIndex: 2,
-    note: '버거 + ㄴ디 = 버건디.',
+    question: '물고기의 반대말은?',
+    choices: ['붕어', '불고기', '생선', '잉어'],
+    correctIndex: 1,
+    note: '물고기의 \'물\'을 \'불\'로 바꾼 불고기 말장난.',
   },
   {
     id: 'pun-dad-lost',
@@ -391,10 +391,10 @@ export const NONSENSE_POOL: readonly NonsenseQuestion[] = [
   {
     id: 'pun-a-snake-fast',
     category: '말장난',
-    question: '세상에서 가장 빠른 뱀은?',
-    choices: ['코브라', '번개뱀', '스피드뱀', '빨라스네이크'],
-    correctIndex: 3,
-    note: '\'빨라\'와 snake를 합친 콩글리시 말장난.',
+    question: '세상에서 가장 무거운 새는?',
+    choices: ['독수리', '백조', '타조', '펭귄'],
+    correctIndex: 1,
+    note: '백조를 숫자 \'100조\'로 읽은 말장난.',
   },
   {
     id: 'pun-a-tofu-fear',
@@ -439,10 +439,10 @@ export const NONSENSE_POOL: readonly NonsenseQuestion[] = [
   {
     id: 'pun-a-potato-shock',
     category: '말장난',
-    question: '감자가 놀라면 되는 것은?',
-    choices: ['고구마', '깜자', '감자튀김', '으깬감자'],
+    question: '세상에서 가장 시끄러운 과일은?',
+    choices: ['수박', '방울토마토', '참외', '자두'],
     correctIndex: 1,
-    note: '\'깜짝\'과 감자를 합쳐 \'깜자\'로 만든 말장난.',
+    note: '딸랑딸랑 소리 나는 \'방울\'이 든 방울토마토.',
   },
   {
     id: 'pun-a-cat-rich',
@@ -527,10 +527,10 @@ export const NONSENSE_POOL: readonly NonsenseQuestion[] = [
   {
     id: 'pun-a-deer-surprise',
     category: '말장난',
-    question: '사슴이 깜짝 놀라면?',
-    choices: ['사슴벌레', '아이사슴', '녹용', '꽃사슴'],
-    correctIndex: 1,
-    note: '놀라는 \'아이쿠\'에 사슴을 끼운 말장난.',
+    question: '병아리가 가장 잘 먹는 약은?',
+    choices: ['삐약', '소화제', '감기약', '비타민'],
+    correctIndex: 0,
+    note: '병아리 울음 \'삐악\'을 약에 빗댄 말장난.',
   },
   {
     id: 'pun-a-persimmon-shock',
@@ -744,7 +744,7 @@ export const NONSENSE_POOL: readonly NonsenseQuestion[] = [
     id: 'pun-b-sailor-snack',
     category: '말장난',
     question: '선원이 제일 좋아하는 과자는?',
-    choices: ['새우깡', '오징어땅콩', '감자깡', '꼬깔콘'],
+    choices: ['양파링', '오징어땅콩', '감자깡', '꼬깔콘'],
     correctIndex: 1,
     note: '바다에서 나는 오징어로 만든 과자라서.',
   },
@@ -1134,7 +1134,7 @@ export const NONSENSE_POOL: readonly NonsenseQuestion[] = [
   },
   {
     id: 'wit-a-month-shortest',
-    category: '재치',
+    category: '말장난',
     question: '발음하면 이가 가장 시린 달은?',
     choices: ['1월', '11월', '12월', '2월'],
     correctIndex: 3,
@@ -1383,10 +1383,10 @@ export const NONSENSE_POOL: readonly NonsenseQuestion[] = [
   {
     id: 'wit-a-clean-dirty',
     category: '재치',
-    question: '닦을수록 더러워지는 것은?',
-    choices: ['거울', '걸레', '유리', '손'],
+    question: '불은 불인데 뜨겁지 않은 불은?',
+    choices: ['모닥불', '반딧불', '장작불', '화롯불'],
     correctIndex: 1,
-    note: '걸레는 닦을수록 더러워짐, \'닦음=깨끗\' 함정',
+    note: '스스로 빛을 내지만 뜨겁지 않은 반딧불.',
   },
   {
     id: 'wit-a-open-close-umbrella',
@@ -1663,10 +1663,10 @@ export const NONSENSE_POOL: readonly NonsenseQuestion[] = [
   {
     id: 'mix-a-favorite-town',
     category: '말장난',
-    question: '학생이 가장 좋아하는 동네는?',
-    choices: ['등교동', '숙제동', '방학동', '시험동'],
-    correctIndex: 2,
-    note: '쉬는 \'방학\'이 들어간 실제 동네 이름 방학동.',
+    question: '별이 가장 좋아하는 사탕은?',
+    choices: ['솜사탕', '별사탕', '막대사탕', '눈깔사탕'],
+    correctIndex: 1,
+    note: '이름에 \'별\'이 든 별사탕.',
   },
   {
     id: 'mix-a-flower-city',
@@ -2286,11 +2286,11 @@ export const NONSENSE_POOL: readonly NonsenseQuestion[] = [
   },
   {
     id: 'wit-b-thin-book',
-    category: '재치',
-    question: '세상에서 가장 얇은 책은?',
-    choices: ['공책', '만화책', '낱장책', '납작책'],
-    correctIndex: 0,
-    note: '\'빌 공\'으로 비어서 얇은 공책',
+    category: '말장난',
+    question: '세상에서 가장 가난한 왕은?',
+    choices: ['폭군', '최저임금', '대왕', '상감마마'],
+    correctIndex: 1,
+    note: '왕을 뜻하는 \'임금\'을 급여 \'임금\'으로 바꾼 말장난.',
   },
   {
     id: 'wit-b-warm-color',
@@ -2319,10 +2319,10 @@ export const NONSENSE_POOL: readonly NonsenseQuestion[] = [
   {
     id: 'logic-b-broken-window',
     category: '말장난',
-    question: '콧물이 나오는 \'창\'은?',
-    choices: ['감기', '유리창', '마음창', '쇼윈도'],
-    correctIndex: 0,
-    note: '감기를 창문으로 착각시킴',
+    question: '세상에서 가장 억울한 도형은?',
+    choices: ['삼각형', '원', '사각형', '마름모'],
+    correctIndex: 1,
+    note: '\'원통하다(억울하다)\'의 원을 도형 원에 빗댄 말장난.',
   },
   {
     id: 'logic-b-two-doors',
