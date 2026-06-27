@@ -55,10 +55,18 @@ export function attachSocketHandlers(io: IO) {
 
       const room = getRoom(roomId);
       if (!room) return ack(err('NO_ROOM', ko.errors.roomNotFound));
-      if (room.players.size >= GAME.MAX_PLAYERS && !playerToken) {
+      // A `playerToken` is only a reconnect credential if it matches a player
+      // record the server still holds. The server issues every token and has no
+      // persistence, so a token that isn't currently in the room is either a
+      // fabrication or a player evicted after grace — both must be treated as a
+      // fresh join. Without this gate a hostile client could fabricate tokens to
+      // bypass the full / in-progress guards and inflate `room.players` past
+      // MAX_PLAYERS (memory abuse on the single shared VM).
+      const reconnecting = !!playerToken && room.players.has(playerToken);
+      if (room.players.size >= GAME.MAX_PLAYERS && !reconnecting) {
         return ack(err('FULL', ko.errors.full));
       }
-      if (room.status !== 'lobby' && room.status !== 'result' && !playerToken) {
+      if (room.status !== 'lobby' && room.status !== 'result' && !reconnecting) {
         return ack(err('IN_PROGRESS', ko.errors.inProgress));
       }
       const nickCheck = validateNickname(room, payload.nickname, playerToken);
