@@ -427,7 +427,18 @@ function clamp(n: number, min: number, max: number) {
 
 function sanitizeNickname(raw: unknown): string | null {
   if (typeof raw !== 'string') return null;
-  const t = raw.trim();
+  // Normalize so visually-identical inputs collapse to a single form (blocks
+  // combining-char / compatibility lookalikes from dodging the dup-nick check).
+  const normalized = raw.normalize('NFC');
+  // Strip control (Cc) and format (Cf) characters — zero-width chars (U+200B…),
+  // BiDi overrides (U+202E), etc. They render invisibly, so without this an
+  // attacker could craft an empty-looking, identical-looking, or reversed
+  // nickname to impersonate another player (the dup-nick check compares exact
+  // strings, so two invisibly-different names that render the same slip past it).
+  const stripped = normalized.replace(/[\p{Cc}\p{Cf}]/gu, '');
+  // Collapse any whitespace run (incl. Unicode spaces) to one ASCII space + trim,
+  // so a name made only of exotic spaces ends up empty and is rejected below.
+  const t = stripped.replace(/\s+/gu, ' ').trim();
   if (t.length < 1 || t.length > NICKNAME.MAX_LENGTH) return null;
   return t;
 }
