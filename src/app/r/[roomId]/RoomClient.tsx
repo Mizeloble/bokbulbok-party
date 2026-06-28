@@ -7,6 +7,7 @@ import { getSocket, disposeSocket } from '@/lib/socket-client';
 import { loadIdentity, saveIdentity } from '@/lib/nickname-store';
 import { useRoomStore, type GameStartPayload, type PublicRoomState, type ResultPayload } from '@/store/room-store';
 import { Lobby } from '@/components/Lobby';
+import { Logo } from '@/components/Logo';
 import { JoinModal } from '@/components/JoinModal';
 import { Countdown } from '@/components/Countdown';
 import { ChargePhase } from '@/components/ChargePhase';
@@ -234,9 +235,12 @@ export default function RoomClient({
   }
 
   if (phase === 'connecting' && !state) {
+    // 콜드스타트(scale-to-zero)·QR 첫 진입 시 보이는 화면 — 빈 텍스트 대신 브랜드
+    // 마크 + 펄스로 "살아있는 로딩" 느낌. 서버 깨어나는 잠깐을 덜 휑하게.
     return (
-      <main className="min-h-dvh flex items-center justify-center text-zinc-400">
-        {ko.errors.connecting}
+      <main className="min-h-dvh flex flex-col items-center justify-center gap-4">
+        <Logo size={48} className="animate-pulse" />
+        <p className="text-sm text-zinc-400">{ko.errors.connecting}</p>
       </main>
     );
   }

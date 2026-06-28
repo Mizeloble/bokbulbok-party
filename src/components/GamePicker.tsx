@@ -3,6 +3,7 @@
 import { GAME_META, type GameId } from '@/games/types';
 import clsx from 'clsx';
 import { ko } from '@/lib/i18n';
+import { gameSubLabel } from '@/lib/game-labels';
 
 export function GamePicker({
   selected,
@@ -41,17 +42,7 @@ export function GamePicker({
               {ko.games[id]}
             </div>
             <div className={clsx('text-xs mt-0.5', isSelected ? 'text-amber-200/80' : 'text-zinc-400')}>
-              {id === 'trivia'
-                ? ko.games.triviaEstimate(m.estimatedSeconds)
-                : id === 'nonsense'
-                ? ko.games.nonsenseEstimate(m.estimatedSeconds)
-                : id === 'marble-tilt'
-                  ? ko.games.tiltEstimate(m.estimatedSeconds)
-                  : m.needsClientInput
-                    ? ko.games.reactionEstimate(m.estimatedSeconds)
-                    : m.needsPreCharge
-                      ? ko.games.cheerEstimate(m.estimatedSeconds)
-                      : ko.games.physicsEstimate(m.estimatedSeconds)}
+              {gameSubLabel(id)}
             </div>
           </button>
         );

@@ -15,8 +15,8 @@ const CREDIT_AUTHOR_URL =
 export const ko = {
   app: {
     title: '복불복',
-    subtitle: '여럿이 모여, 폰으로',
-    metaDescription: '폰으로 같이 하는 벌칙 정하기 게임',
+    subtitle: '술자리·모임 벌칙, 폰으로 정하기',
+    metaDescription: '앱 설치 없이 폰으로 즐기는 벌칙 정하기 게임 · QR로 모여 미니게임 한 판',
     madeBy: `제작 ${CREDIT_AUTHOR}`,
   },
   landing: {
@@ -33,6 +33,8 @@ export const ko = {
     ],
     gamesTitle: (n: number) => `미니게임 ${n}종`,
     installFree: '앱 설치 없이 폰 브라우저로',
+    openSource: '오픈소스 · MIT',
+    demoAlt: '마블 레이스 미리보기',
   },
   lobby: {
     waiting: '참가자를 기다리는 중',
