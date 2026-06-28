@@ -15,6 +15,13 @@ async function main() {
 
   const httpServer = createServer((req, res) => {
     const parsedUrl = parse(req.url ?? '/', true);
+    // Liveness / warmup probe for uptime pings and launch-day checks. Answered
+    // here (before Next) so it stays cheap and never touches room state.
+    if (parsedUrl.pathname === '/healthz') {
+      res.writeHead(200, { 'content-type': 'text/plain' });
+      res.end('ok');
+      return;
+    }
     return handle(req, res, parsedUrl);
   });
 
