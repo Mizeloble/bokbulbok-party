@@ -41,7 +41,8 @@
 **원칙: 클릭하는 순간 서버가 떠 있어야 한다.** 콜드스타트로 첫 방문자가 빈 화면/지연을 먹으면 홍보가 역효과. 상시가동 방식을 먼저 정한다.
 
 ### 4-A. 상시 오픈 — 동시 유입 채널(GeekNews/HN)에 권장
-- `fly.toml`: `auto_stop_machines = "off"`, `min_machines_running = 1`
+- `fly.toml`: `auto_stop_machines = "stop"`, `min_machines_running = 1` (1대 상시가동 관용구).
+  - ⚠️ `"off"` + min 1 은 안 됨: Fly에서 `min_machines_running`은 `auto_stop`이 `stop`/`suspend`일 때만 적용되고, `"off"`는 "떠 있으면 안 끈다"일 뿐 꺼진 머신을 띄우지 않음 → 배포/크래시 후 stopped로 떨어진다(2026-06-28 실측 확인).
 - 비용: shared-cpu-1x 512MB 1대 24/7 = 소액(월 몇 달러 수준 추정, **현재 Fly 요금은 직접 확인**). 버스트 첫인상 값으로 정당화됨.
 - **런치 종료 후 다시 `"stop"` 으로 되돌려** scale-to-zero 복귀 → 평소 비용 0 근접. 즉 "며칠치"만 낸다.
 
