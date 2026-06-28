@@ -34,7 +34,7 @@ export const ko = {
     gamesTitle: (n: number) => `미니게임 ${n}종`,
     installFree: '앱 설치 없이 폰 브라우저로',
     openSource: '오픈소스 · MIT',
-    demoAlt: '마블 레이스 미리보기',
+    demoAlt: '미니게임 하이라이트 미리보기',
   },
   lobby: {
     waiting: '참가자를 기다리는 중',

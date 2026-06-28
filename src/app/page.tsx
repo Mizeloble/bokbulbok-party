@@ -70,7 +70,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* 히어로 데모 — 실제 마블 레이스 한 장면(핵심 재미 즉시 전달) */}
+          {/* 히어로 데모 — 여러 미니게임 하이라이트 몽타주(마블·반응속도·퀴즈) */}
           <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
             <video
               className="h-44 w-full object-cover"
@@ -78,10 +78,10 @@ export default function LandingPage() {
               muted
               loop
               playsInline
-              poster="/demo-marble.jpg"
+              poster="/demo-games.jpg"
               aria-label={ko.landing.demoAlt}
             >
-              <source src="/demo-marble.mp4" type="video/mp4" />
+              <source src="/demo-games.mp4" type="video/mp4" />
             </video>
           </div>
 
