@@ -3,8 +3,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ko } from '@/lib/i18n';
+import { GAME_META, type GameId } from '@/games/types';
 import { AdSlot } from '@/components/AdSlot';
 import { SiteFooter } from '@/components/SiteFooter';
+
+// 랜딩 라인업은 로비 GamePicker와 같은 출처(GAME_META) — 활성 게임만, 같은 순서.
+const GAME_IDS = (Object.keys(GAME_META) as GameId[]).filter((id) => GAME_META[id].enabled);
 
 export default function LandingPage() {
   const router = useRouter();
@@ -33,27 +37,57 @@ export default function LandingPage() {
   }
 
   return (
-    <main className="min-h-dvh flex flex-col px-6 text-center">
-      <div className="flex-1 flex items-center justify-center">
-        <div className="max-w-sm w-full space-y-10">
-          <div className="space-y-2">
+    <main className="min-h-dvh flex flex-col px-6">
+      <div className="flex-1 flex flex-col justify-center py-8">
+        <div className="mx-auto w-full max-w-sm space-y-7">
+          {/* 헤더 */}
+          <div className="space-y-2 text-center">
             <div className="text-6xl">🎯</div>
             <h1 className="text-3xl font-bold">{ko.app.title}</h1>
             <p className="text-zinc-400 text-sm">{ko.app.subtitle}</p>
-            {ko.credit.authorUrl ? (
-              <a
-                href={ko.credit.authorUrl}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="inline-block text-xs text-zinc-500 underline-offset-2 hover:underline hover:text-zinc-300"
-              >
-                {ko.app.madeBy}
-              </a>
-            ) : (
-              <p className="text-xs text-zinc-500">{ko.app.madeBy}</p>
-            )}
+            <p className="inline-flex items-center gap-1 text-xs text-emerald-300/90">
+              <span aria-hidden>✦</span>
+              {ko.landing.installFree}
+            </p>
           </div>
-          <p className="text-zinc-300 text-sm leading-relaxed">{ko.landing.description}</p>
+
+          {/* 이렇게 즐겨요 — 3스텝 */}
+          <div className="space-y-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+              {ko.landing.howTitle}
+            </p>
+            <ol className="space-y-2">
+              {ko.landing.steps.map((step, i) => (
+                <li key={i} className="flex items-center gap-3">
+                  <span className="flex-none grid h-6 w-6 place-items-center rounded-full bg-amber-400 text-xs font-bold text-zinc-900">
+                    {i + 1}
+                  </span>
+                  <span className="text-sm text-zinc-300">{step}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          {/* 미니게임 라인업 — 로비 진입 전 콜드 방문자에게 콘텐츠 노출 */}
+          <div className="space-y-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+              {ko.landing.gamesTitle(GAME_IDS.length)}
+            </p>
+            <ul className="grid grid-cols-3 gap-2">
+              {GAME_IDS.map((id) => (
+                <li
+                  key={id}
+                  className="flex flex-col items-center gap-1 rounded-xl border border-zinc-700/60 bg-zinc-800/50 px-2 py-3 text-center"
+                >
+                  <span className="text-2xl leading-none" aria-hidden>
+                    {GAME_META[id].emoji}
+                  </span>
+                  <span className="text-[11px] leading-tight text-zinc-300">{ko.games[id]}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           <button
             type="button"
             onClick={createRoom}

@@ -25,6 +25,14 @@ export const ko = {
     description: 'QR을 찍어 모인 사람들끼리 게임으로 벌칙 정해요',
     createFailed: '방 생성에 실패했어요. 다시 시도해주세요.',
     busy: '지금 접속이 몰려요. 잠시 후 다시 시도해주세요',
+    howTitle: '이렇게 즐겨요',
+    steps: [
+      '방을 만들면 QR 코드가 떠요',
+      '친구들이 QR을 스캔해 바로 입장 (2~30명)',
+      '미니게임 한 판으로 벌칙 당첨자 결정',
+    ],
+    gamesTitle: (n: number) => `미니게임 ${n}종`,
+    installFree: '앱 설치 없이 폰 브라우저로',
   },
   lobby: {
     waiting: '참가자를 기다리는 중',
