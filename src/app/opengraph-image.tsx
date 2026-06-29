@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { ko } from '@/lib/i18n';
+import { MARBLE_COLORS } from '@/lib/constants';
 
 // 카카오톡·SNS에 방 링크를 붙였을 때 보이는 1200×630 미리보기 카드.
 // satori는 한글 글리프를 위해 폰트를 명시해야 함(없으면 □로 깨짐) → Pretendard OTF 주입.
@@ -72,13 +73,27 @@ export default async function OpengraphImage() {
         <div style={{ marginTop: 56, fontSize: 116, fontWeight: 700, letterSpacing: -4 }}>
           {ko.app.title}
         </div>
-        <div style={{ marginTop: 12, fontSize: 40, color: '#a1a1aa' }}>
+        <div
+          style={{
+            marginTop: 12,
+            fontSize: 38,
+            color: '#a1a1aa',
+            maxWidth: 940,
+            textAlign: 'center',
+          }}
+        >
           {ko.app.metaDescription}
         </div>
 
-        <div
-          style={{ marginTop: 48, width: 120, height: 8, borderRadius: 4, background: '#fbbf24' }}
-        />
+        {/* 마블 색 점 줄 — 마블 레이스 정체성. 이모지 폰트 의존 없이 div로. */}
+        <div style={{ marginTop: 44, display: 'flex', gap: 16 }}>
+          {MARBLE_COLORS.slice(0, 7).map((c) => (
+            <div
+              key={c}
+              style={{ width: 26, height: 26, borderRadius: '50%', background: c }}
+            />
+          ))}
+        </div>
       </div>
     ),
     {

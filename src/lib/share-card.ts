@@ -1,4 +1,5 @@
 import { ko } from './i18n';
+import { MARBLE_COLORS } from './constants';
 
 // 결과 공유 카드 — 클라이언트에서 캔버스로 즉석 렌더 → Blob.
 //
@@ -72,6 +73,21 @@ export async function renderResultCard(data: ShareCardData): Promise<Blob> {
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+
+  // 상단 마블 색 점 줄 — OG·랜딩과 같은 브랜드 정체성(은은하게).
+  const dotCount = Math.min(7, MARBLE_COLORS.length);
+  const dotR = 11;
+  const dotGap = 34;
+  const dotsW = (dotCount - 1) * dotGap;
+  ctx.save();
+  ctx.globalAlpha = 0.85;
+  for (let i = 0; i < dotCount; i++) {
+    ctx.beginPath();
+    ctx.arc(SIZE / 2 - dotsW / 2 + i * dotGap, 92, dotR, 0, Math.PI * 2);
+    ctx.fillStyle = MARBLE_COLORS[i];
+    ctx.fill();
+  }
+  ctx.restore();
 
   // 상단 칩 — 🎯 오늘의 벌칙
   const chipText = `🎯 ${ko.result.headerChip}`;
