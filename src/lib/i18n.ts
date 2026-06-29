@@ -17,7 +17,6 @@ export const ko = {
     title: '복불복',
     subtitle: '술자리·모임 벌칙, 폰으로 정하기',
     metaDescription: '앱 설치 없이 폰으로 즐기는 벌칙 정하기 게임 · QR로 모여 미니게임 한 판',
-    madeBy: `제작 ${CREDIT_AUTHOR}`,
   },
   landing: {
     createRoom: '방 만들기',
@@ -58,7 +57,8 @@ export const ko = {
     comingSoon: '준비 중',
     meBadge: '나',
     cancel: '취소',
-    roomBadge: (id: string, isHost: boolean) => `방 ${id}${isHost ? ' · 호스트' : ''}`,
+    roomLabel: '방',
+    hostTag: '호스트',
     addManualTitle: '직접 추가',
     addManualHint: '폰 없는 사람을 호스트가 대신 등록',
     addManualPlaceholder: '닉네임 입력',

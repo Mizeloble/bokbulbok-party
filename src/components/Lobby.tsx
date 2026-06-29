@@ -5,6 +5,7 @@ import { ko } from '@/lib/i18n';
 import { useRoomStore } from '@/store/room-store';
 import { GamePicker } from './GamePicker';
 import { GameIntro } from './GameIntro';
+import { Logo } from './Logo';
 import { InviteSheet } from './InviteSheet';
 import { TiltPermissionGate } from '@/games/marble-tilt/TiltPermissionGate';
 import { AdSlot } from './AdSlot';
@@ -73,25 +74,24 @@ export function Lobby({ inviteUrl, onChangeNickname }: { inviteUrl: string; onCh
 
   return (
     <main className="min-h-dvh flex flex-col">
-      {/* top bar — pill-shaped invite button on the right */}
+      {/* top bar — 브랜드 로고 + 방 코드(또렷하게) · 우측 초대 버튼 */}
       <header className="px-4 pt-4 pb-2 flex items-center justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="font-bold text-base truncate -tracking-wide">{ko.app.title}</div>
-          <div className="text-zinc-500 text-xs mt-0.5 flex items-center gap-1.5">
-            <span>{ko.lobby.roomBadge(state.id, isHost)}</span>
-            <span aria-hidden>·</span>
-            {ko.credit.authorUrl ? (
-              <a
-                href={ko.credit.authorUrl}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="underline-offset-2 hover:underline hover:text-zinc-300"
-              >
-                {ko.app.madeBy}
-              </a>
-            ) : (
-              <span>{ko.app.madeBy}</span>
-            )}
+        <div className="min-w-0 flex-1 flex items-center gap-2.5">
+          <Logo size={30} className="shrink-0" />
+          <div className="min-w-0">
+            <div className="font-bold text-base truncate -tracking-wide leading-tight">
+              {ko.app.title}
+            </div>
+            <div className="text-zinc-500 text-xs mt-0.5 flex items-center gap-1">
+              <span>{ko.lobby.roomLabel}</span>
+              <span className="font-mono tracking-wider text-zinc-300">{state.id}</span>
+              {isHost && (
+                <>
+                  <span aria-hidden>·</span>
+                  <span>{ko.lobby.hostTag}</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
         <button
