@@ -4,12 +4,28 @@
 
 html,
 body {
-  background: radial-gradient(120% 80% at 50% 0%, #14141c 0%, #0b0b10 55%) #0b0b10;
+  /* 상단에 은은한 앰버 글로우 한 겹 → 평범한 다크에서 "복불복" 브랜드 톤으로. */
+  background:
+    radial-gradient(85% 45% at 50% -8%, rgba(251, 191, 36, 0.08), transparent 62%),
+    radial-gradient(120% 80% at 50% 0%, #14141c 0%, #0b0b10 55%) #0b0b10;
   color: #f5f5f5;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   letter-spacing: -0.01em;
   height: 100%;
   overscroll-behavior: none;
+}
+
+/* 디스플레이 타이포 — 제목은 더 단단하게(자간 압축) 위계 강화. */
+h1,
+h2,
+h3 {
+  letter-spacing: -0.035em;
+}
+
+::selection {
+  background: rgba(251, 191, 36, 0.3);
+  color: #fff;
 }
 
 button {
@@ -19,4 +35,26 @@ button {
 /* Mobile-safe full height */
 .min-h-dvh {
   min-height: 100dvh;
+}
+
+@layer components {
+  /* 1차 액션 버튼 — 앰버 그라데이션 + 글로우로 일관된 CTA 정체성.
+     랜딩 '방 만들기', 로비 '시작' 등 주요 버튼에 공통 적용. */
+  .btn-primary {
+    @apply w-full rounded-2xl py-4 text-lg font-bold text-zinc-900 transition-transform active:scale-[0.98] disabled:opacity-50;
+    background-image: linear-gradient(180deg, #fcd34d 0%, #fbbf24 100%);
+    box-shadow:
+      0 10px 30px -8px rgba(251, 191, 36, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  /* 카드/표면 — 상단 하이라이트 + 부드러운 그림자로 미세한 입체감. 평평한
+     zinc 박스 대신 일관된 표면 토큰. (선택 상태는 각 컴포넌트가 덧칠.) */
+  .surface {
+    @apply rounded-2xl border border-white/10;
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 1px 3px rgba(0, 0, 0, 0.35);
+  }
 }

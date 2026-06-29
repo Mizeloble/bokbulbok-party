@@ -146,10 +146,10 @@ export function Lobby({ inviteUrl, onChangeNickname }: { inviteUrl: string; onCh
                       type="button"
                       onClick={() => setLoserCount(n)}
                       className={clsx(
-                        'flex-1 py-3.5 rounded-xl font-bold text-[15px] border-[1.5px]',
+                        'flex-1 py-3.5 rounded-xl font-bold text-[15px] border-[1.5px] transition-all',
                         isSelected
-                          ? 'border-amber-600 bg-amber-600/10 text-amber-200'
-                          : 'border-zinc-700 bg-zinc-900 text-zinc-100',
+                          ? 'border-amber-500/70 bg-amber-500/10 text-amber-200 shadow-[0_8px_24px_-12px_rgba(251,191,36,0.5)]'
+                          : 'border-white/10 bg-white/[0.04] text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]',
                       )}
                     >
                       {ko.lobby.loserCountUnit(n)}
@@ -296,12 +296,7 @@ export function Lobby({ inviteUrl, onChangeNickname }: { inviteUrl: string; onCh
       {/* sticky bottom CTA (host only) */}
       {isHost && (
         <div className="fixed bottom-0 left-0 right-0 px-4 pb-[max(env(safe-area-inset-bottom),16px)] pt-3 bg-gradient-to-t from-[#0b0b10] via-[#0b0b10]/95 to-transparent">
-          <button
-            type="button"
-            disabled={!canStart}
-            onClick={start}
-            className="w-full py-4 rounded-2xl bg-amber-400 text-zinc-900 font-extrabold text-lg disabled:opacity-50 active:scale-[0.98] shadow-[0_8px_24px_rgba(251,191,36,0.25)]"
-          >
+          <button type="button" disabled={!canStart} onClick={start} className="btn-primary">
             {canStart ? ko.lobby.start : ko.lobby.needMorePlayers}
           </button>
         </div>
