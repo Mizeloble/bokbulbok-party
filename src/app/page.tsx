@@ -109,10 +109,7 @@ export default function LandingPage() {
             </p>
             <ul className="grid grid-cols-2 gap-2">
               {GAME_IDS.map((id) => (
-                <li
-                  key={id}
-                  className="flex items-center gap-2.5 rounded-xl border border-zinc-700/60 bg-zinc-800/50 px-3 py-2.5"
-                >
+                <li key={id} className="surface flex items-center gap-2.5 rounded-xl px-3 py-2.5">
                   <span className="text-xl leading-none" aria-hidden>
                     {GAME_META[id].emoji}
                   </span>
@@ -145,12 +142,7 @@ export default function LandingPage() {
               {error}
             </p>
           )}
-          <button
-            type="button"
-            onClick={createRoom}
-            disabled={busy}
-            className="w-full rounded-2xl bg-amber-400 py-4 text-lg font-bold text-zinc-900 transition-transform active:scale-[0.98] disabled:opacity-50"
-          >
+          <button type="button" onClick={createRoom} disabled={busy} className="btn-primary">
             {busy ? ko.landing.creating : ko.landing.createRoom}
           </button>
         </div>

@@ -5,6 +5,7 @@ import { ko } from '@/lib/i18n';
 import { useRoomStore } from '@/store/room-store';
 import { GamePicker } from './GamePicker';
 import { GameIntro } from './GameIntro';
+import { Logo } from './Logo';
 import { InviteSheet } from './InviteSheet';
 import { TiltPermissionGate } from '@/games/marble-tilt/TiltPermissionGate';
 import { AdSlot } from './AdSlot';
@@ -73,25 +74,24 @@ export function Lobby({ inviteUrl, onChangeNickname }: { inviteUrl: string; onCh
 
   return (
     <main className="min-h-dvh flex flex-col">
-      {/* top bar — pill-shaped invite button on the right */}
+      {/* top bar — 브랜드 로고 + 방 코드(또렷하게) · 우측 초대 버튼 */}
       <header className="px-4 pt-4 pb-2 flex items-center justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="font-bold text-base truncate -tracking-wide">{ko.app.title}</div>
-          <div className="text-zinc-500 text-xs mt-0.5 flex items-center gap-1.5">
-            <span>{ko.lobby.roomBadge(state.id, isHost)}</span>
-            <span aria-hidden>·</span>
-            {ko.credit.authorUrl ? (
-              <a
-                href={ko.credit.authorUrl}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="underline-offset-2 hover:underline hover:text-zinc-300"
-              >
-                {ko.app.madeBy}
-              </a>
-            ) : (
-              <span>{ko.app.madeBy}</span>
-            )}
+        <div className="min-w-0 flex-1 flex items-center gap-2.5">
+          <Logo size={30} className="shrink-0" />
+          <div className="min-w-0">
+            <div className="font-bold text-base truncate -tracking-wide leading-tight">
+              {ko.app.title}
+            </div>
+            <div className="text-zinc-500 text-xs mt-0.5 flex items-center gap-1">
+              <span>{ko.lobby.roomLabel}</span>
+              <span className="font-mono tracking-wider text-zinc-300">{state.id}</span>
+              {isHost && (
+                <>
+                  <span aria-hidden>·</span>
+                  <span>{ko.lobby.hostTag}</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
         <button
@@ -146,10 +146,10 @@ export function Lobby({ inviteUrl, onChangeNickname }: { inviteUrl: string; onCh
                       type="button"
                       onClick={() => setLoserCount(n)}
                       className={clsx(
-                        'flex-1 py-3.5 rounded-xl font-bold text-[15px] border-[1.5px]',
+                        'flex-1 py-3.5 rounded-xl font-bold text-[15px] border-[1.5px] transition-all',
                         isSelected
-                          ? 'border-amber-600 bg-amber-600/10 text-amber-200'
-                          : 'border-zinc-700 bg-zinc-900 text-zinc-100',
+                          ? 'border-amber-500/70 bg-amber-500/10 text-amber-200 shadow-[0_8px_24px_-12px_rgba(251,191,36,0.5)]'
+                          : 'border-white/10 bg-white/[0.04] text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]',
                       )}
                     >
                       {ko.lobby.loserCountUnit(n)}
@@ -296,12 +296,7 @@ export function Lobby({ inviteUrl, onChangeNickname }: { inviteUrl: string; onCh
       {/* sticky bottom CTA (host only) */}
       {isHost && (
         <div className="fixed bottom-0 left-0 right-0 px-4 pb-[max(env(safe-area-inset-bottom),16px)] pt-3 bg-gradient-to-t from-[#0b0b10] via-[#0b0b10]/95 to-transparent">
-          <button
-            type="button"
-            disabled={!canStart}
-            onClick={start}
-            className="w-full py-4 rounded-2xl bg-amber-400 text-zinc-900 font-extrabold text-lg disabled:opacity-50 active:scale-[0.98] shadow-[0_8px_24px_rgba(251,191,36,0.25)]"
-          >
+          <button type="button" disabled={!canStart} onClick={start} className="btn-primary">
             {canStart ? ko.lobby.start : ko.lobby.needMorePlayers}
           </button>
         </div>

@@ -9,10 +9,13 @@ import { rmSync, mkdirSync, readdirSync, renameSync, statSync } from 'node:fs';
 const GAME = process.argv[2] || 'marble';
 const SPEC = {
   marble: { card: null, mode: 'result' },
+  'marble-cheer': { card: '응원 마블 레이스', mode: 'cheer' },
   reaction: { card: '동시탭 반응속도', mode: 'reaction', holdMs: 4000 },
   trivia: { card: '일반 상식', mode: 'trivia', captureMs: 22_000 },
+  nonsense: { card: '넌센스 퀴즈', mode: 'trivia', captureMs: 22_000 },
 }[GAME];
-if (!SPEC) throw new Error(`unknown game: ${GAME} (marble|reaction|trivia)`);
+if (!SPEC)
+  throw new Error(`unknown game: ${GAME} (marble|marble-cheer|reaction|trivia|nonsense)`);
 
 const URL = process.env.DEMO_URL || 'http://localhost:3000';
 const OUT = '/tmp/bbb-promo';
@@ -66,6 +69,16 @@ try {
     await page.getByRole('button', { name: /결과 보기/ }).click({ timeout: 80_000 });
     await page.getByText('오늘의 벌칙').waitFor({ timeout: 8000 });
     await page.waitForTimeout(3500);
+  } else if (SPEC.mode === 'cheer') {
+    // 응원 마블: 충전 페이즈(~5초) 동안 화면 중앙 연타로 게이지 채움 → 레이스 → 결과
+    const until = Date.now() + 5200;
+    while (Date.now() < until) {
+      await page.mouse.click(270, 480).catch(() => {});
+      await page.waitForTimeout(50);
+    }
+    await page.getByRole('button', { name: /결과 보기/ }).click({ timeout: 80_000 });
+    await page.getByText('오늘의 벌칙').waitFor({ timeout: 8000 });
+    await page.waitForTimeout(2000);
   } else if (SPEC.mode === 'reaction') {
     // 반응속도: 준비(회색) → 지금!(앰버) 전환을 감지해 한 번 탭, 그 뒤 잠깐 더 녹화
     await page

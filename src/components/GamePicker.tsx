@@ -33,8 +33,8 @@ export function GamePicker({
             className={clsx(
               'w-full relative rounded-2xl px-3 py-3.5 text-left border-[1.5px] transition-all',
               isSelected
-                ? 'border-amber-600 bg-amber-600/10 text-amber-200'
-                : 'border-zinc-700 bg-zinc-800 text-zinc-100',
+                ? 'border-amber-500/70 bg-amber-500/10 text-amber-200 shadow-[0_0_0_1px_rgba(251,191,36,0.15),0_8px_24px_-12px_rgba(251,191,36,0.5)]'
+                : 'border-white/10 bg-white/[0.04] text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]',
             )}
           >
             <div className="text-2xl leading-none">{m.emoji}</div>
