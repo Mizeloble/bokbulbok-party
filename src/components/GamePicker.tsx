@@ -3,7 +3,6 @@
 import { GAME_META, type GameId } from '@/games/types';
 import clsx from 'clsx';
 import { ko } from '@/lib/i18n';
-import { gameSubLabel } from '@/lib/game-labels';
 
 export function GamePicker({
   selected,
@@ -31,18 +30,37 @@ export function GamePicker({
             disabled={!tappable}
             onClick={() => tappable && onSelect(id)}
             className={clsx(
-              'w-full relative rounded-2xl px-3 py-3.5 text-left border-[1.5px] transition-all',
+              'w-full relative rounded-2xl px-3 py-3 text-left border-[1.5px] transition-all',
               isSelected
                 ? 'border-amber-500/70 bg-amber-500/10 text-amber-200 shadow-[0_0_0_1px_rgba(251,191,36,0.15),0_8px_24px_-12px_rgba(251,191,36,0.5)]'
                 : 'border-white/10 bg-white/[0.04] text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]',
             )}
           >
-            <div className="text-2xl leading-none">{m.emoji}</div>
-            <div className={clsx('font-bold mt-1.5 text-[15px]', isSelected && 'text-amber-200')}>
-              {ko.games[id]}
-            </div>
-            <div className={clsx('text-xs mt-0.5', isSelected ? 'text-amber-200/80' : 'text-zinc-400')}>
-              {gameSubLabel(id)}
+            <div className="flex items-start gap-3">
+              <span className="text-2xl leading-none mt-0.5">{m.emoji}</span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className={clsx('font-bold text-[15px]', isSelected && 'text-amber-200')}>
+                    {ko.games[id]}
+                  </span>
+                  <span
+                    className={clsx(
+                      'shrink-0 text-[11px] tabular-nums',
+                      isSelected ? 'text-amber-200/70' : 'text-zinc-500',
+                    )}
+                  >
+                    {ko.games.secEstimate(m.estimatedSeconds)}
+                  </span>
+                </div>
+                <p
+                  className={clsx(
+                    'mt-0.5 text-xs leading-snug',
+                    isSelected ? 'text-amber-200/80' : 'text-zinc-400',
+                  )}
+                >
+                  {ko.gameDesc[id]}
+                </p>
+              </div>
             </div>
           </button>
         );
