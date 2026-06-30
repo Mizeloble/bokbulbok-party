@@ -161,6 +161,18 @@ export const ko = {
     reactionEstimate: (s: number) => `~${s}초 · 반응 속도`,
     triviaEstimate: (s: number) => `~${s}초 · 상식 퀴즈`,
     nonsenseEstimate: (s: number) => `~${s}초 · 넌센스 퀴즈`,
+    secEstimate: (s: number) => `~${s}초`,
+  },
+  // 로비 게임 카드의 한 줄 소개("뭐 하는 게임인지 + 벌칙 조건"). 상세 규칙은 gameIntros.
+  gameDesc: {
+    marble: '구슬이 굴러 내려가 꼴찌가 벌칙',
+    'marble-cheer': '응원 탭으로 충전한 뒤 레이스',
+    'marble-tilt': '폰을 기울여 구슬 조종, 꼴찌 벌칙',
+    slot: '이름이 슬롯처럼 돌다 멈춘 자리 벌칙',
+    elimination: '룰렛이 한 명씩 지목, 끝까지 생존',
+    reaction: '신호에 가장 늦게 탭하면 벌칙',
+    trivia: '상식 4지선다, 점수 낮으면 벌칙',
+    nonsense: '넌센스 4지선다, 점수 낮으면 벌칙',
   },
   gameIntros: {
     marble: [
