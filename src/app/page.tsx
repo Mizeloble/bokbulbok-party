@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ko } from '@/lib/i18n';
+import { isValidRoomId, normalizeRoomId } from '@/lib/ids';
 import { GAME_META, type GameId } from '@/games/types';
 import { gameSubLabel } from '@/lib/game-labels';
 import { AdSlot } from '@/components/AdSlot';
@@ -17,6 +18,17 @@ export default function LandingPage() {
   const [busy, setBusy] = useState(false);
   // 방 생성 실패·혼잡은 네이티브 alert() 대신 인라인 배너로 — 공개 서비스 느낌.
   const [error, setError] = useState<string | null>(null);
+  // QR을 못 찍는 참가자용 방 코드 직접 입력.
+  const [code, setCode] = useState('');
+  const [codeError, setCodeError] = useState<string | null>(null);
+
+  function joinByCode() {
+    if (!isValidRoomId(code)) {
+      setCodeError(ko.landing.joinByCodeInvalid);
+      return;
+    }
+    router.push(`/r/${normalizeRoomId(code)}?join=1`);
+  }
 
   async function createRoom() {
     if (busy) return;
@@ -124,6 +136,46 @@ export default function LandingPage() {
                 </li>
               ))}
             </ul>
+          </div>
+
+          {/* 코드로 입장 — QR을 못 찍는 참가자(카메라 없음·링크만 받음)용 우회 경로 */}
+          <div className="space-y-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+              {ko.landing.joinByCodeTitle}
+            </p>
+            <div className="flex gap-2">
+              <input
+                inputMode="text"
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
+                maxLength={6}
+                value={code}
+                onChange={(e) => {
+                  setCode(e.target.value.toUpperCase());
+                  if (codeError) setCodeError(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') joinByCode();
+                }}
+                placeholder={ko.landing.joinByCodePlaceholder}
+                aria-label={ko.landing.joinByCodeTitle}
+                className="min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 font-mono text-base tracking-[0.2em] uppercase placeholder:tracking-normal placeholder:font-sans focus:border-amber-400 focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={joinByCode}
+                disabled={code.trim().length === 0}
+                className="flex-none rounded-xl bg-zinc-700 px-5 py-3 text-sm font-bold text-zinc-100 active:scale-[0.98] disabled:opacity-50"
+              >
+                {ko.landing.joinByCodeSubmit}
+              </button>
+            </div>
+            {codeError && (
+              <p role="alert" className="text-xs text-rose-400">
+                {codeError}
+              </p>
+            )}
           </div>
 
           <AdSlot placement="landing" width={320} height={50} />

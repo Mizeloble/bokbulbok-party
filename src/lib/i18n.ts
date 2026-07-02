@@ -34,6 +34,11 @@ export const ko = {
     installFree: '앱 설치 없이 폰 브라우저로',
     openSource: '오픈소스 · MIT',
     demoAlt: '미니게임 하이라이트 미리보기',
+    // QR을 못 찍는 상황(카메라 없음·링크만 받음)을 위한 방 코드 직접 입력.
+    joinByCodeTitle: '코드로 입장',
+    joinByCodePlaceholder: '방 코드 (예: ABCD)',
+    joinByCodeSubmit: '입장',
+    joinByCodeInvalid: '방 코드를 확인해주세요',
   },
   lobby: {
     waiting: '참가자를 기다리는 중',
@@ -59,6 +64,8 @@ export const ko = {
     cancel: '취소',
     roomLabel: '방',
     hostTag: '호스트',
+    // 이전 호스트가 나가 자동으로 호스트 권한을 넘겨받았을 때 뜨는 안내.
+    becameHost: '호스트가 나가서 내가 방장이 됐어요',
     addManualTitle: '직접 추가',
     addManualHint: '폰 없는 사람을 호스트가 대신 등록',
     addManualPlaceholder: '닉네임 입력',
@@ -119,6 +126,9 @@ export const ko = {
     generic: '문제가 생겼어요',
     connecting: '연결 중…',
     reconnecting: '연결이 끊겼어요 · 다시 연결 중…',
+    reconnectRetry: '새로고침',
+    serverRestarting: '서버 업데이트 중 · 곧 다시 연결돼요',
+    offline: '인터넷 연결이 끊겼어요',
     backToHome: '처음으로',
     roomNotFound: '방을 찾을 수 없어요',
     raceInProgress: '이미 진행 중인 게임이 있어요',

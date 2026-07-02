@@ -8,7 +8,9 @@ import {
   deleteRoom,
   findPlayerBySocket,
   getRoom,
+  isHostPlayer,
   isHostToken,
+  promoteNextHost,
   publicRoomState,
   touch,
   type RoomState,
@@ -89,8 +91,16 @@ export function attachSocketHandlers(io: IO) {
         socketId: socket.id,
       });
 
-      const isHost = isHostToken(room, hostToken);
-      if (isHost) room.hostSocketId = socket.id;
+      // Host rights come from either the secret hostToken (original creator) or
+      // holding the current hostPlayerToken (original host reconnecting, or a
+      // participant auto-promoted after the previous host left). Recording the
+      // token here is what lets host survive a refresh without re-sending the
+      // secret hostToken.
+      const isHost = isHostToken(room, hostToken) || isHostPlayer(room, player.playerToken);
+      if (isHost) {
+        room.hostSocketId = socket.id;
+        room.hostPlayerToken = player.playerToken;
+      }
 
       currentRoomId = room.id;
       socket.join(room.id);
@@ -176,19 +186,35 @@ export function attachSocketHandlers(io: IO) {
       if (connectedPlayers.length < GAME.MIN_PLAYERS) return;
       if (room.status === 'charging' || room.status === 'countdown' || room.status === 'playing') return;
 
-      const meta = GAME_META[room.gameId];
-      if (isLiveGame(room.gameId)) {
-        await runMarbleTiltRound(io, room);
-      } else if (meta.needsClientInput) {
-        if (isQuizGame(room.gameId)) {
-          await runQuizRound(io, room);
+      // A round runner throwing mid-game would reject this async handler with no
+      // catch — an unhandledRejection on the shared process. Contain it here: log
+      // with room context and reset the room to lobby so the group can retry
+      // instead of being stuck in a half-started state.
+      try {
+        const meta = GAME_META[room.gameId];
+        if (isLiveGame(room.gameId)) {
+          await runMarbleTiltRound(io, room);
+        } else if (meta.needsClientInput) {
+          if (isQuizGame(room.gameId)) {
+            await runQuizRound(io, room);
+          } else {
+            await runReactionRound(io, room);
+          }
+        } else if (meta.needsPreCharge) {
+          startChargingPhase(io, room);
         } else {
-          await runReactionRound(io, room);
+          await runRound(io, room, /*chargeRatios*/ undefined);
         }
-      } else if (meta.needsPreCharge) {
-        startChargingPhase(io, room);
-      } else {
-        await runRound(io, room, /*chargeRatios*/ undefined);
+      } catch (e) {
+        console.error(`[start] round failed room=${room.id} game=${room.gameId}`, e);
+        clearCharge(room);
+        clearReaction(room);
+        clearTrivia(room);
+        clearMarbleTilt(room);
+        room.status = 'lobby';
+        room.currentRound = undefined;
+        touch(room);
+        io.to(room.id).emit('state', publicRoomState(room));
       }
     });
 
@@ -317,6 +343,10 @@ function detachSocketFromRoom(io: IO, room: RoomState, socketId: string) {
   if (player.graceTimer) clearTimeout(player.graceTimer);
   player.graceTimer = setTimeout(() => {
     if (!player.connected) {
+      // If the host never came back within grace, hand host to the next
+      // participant after removing them — otherwise the room is stuck with
+      // nobody able to pick a game or press start.
+      const wasHost = isHostPlayer(room, player.playerToken);
       room.players.delete(player.playerToken);
       // Last player gone — delete the room now instead of letting `touch`
       // push the idle cleanup another IDLE_MS out (would hold a MAX_ROOMS slot).
@@ -324,6 +354,7 @@ function detachSocketFromRoom(io: IO, room: RoomState, socketId: string) {
         deleteRoom(room.id);
         return;
       }
+      if (wasHost) promoteNextHost(room);
       touch(room);
       io.to(room.id).emit('state', publicRoomState(room));
     }

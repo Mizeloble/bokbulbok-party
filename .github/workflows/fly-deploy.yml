@@ -7,8 +7,23 @@ on:
       - main
   workflow_dispatch:    # 수동 재배포 트리거(Actions 탭 "Run workflow") — 코드 변경 없이 env/secret 갱신 반영용
 jobs:
+  # 타입·테스트 게이트 — 통과해야 배포. 타입 오류/로직 회귀가 프로덕션으로 직행하는 걸 막음.
+  check:
+    name: Typecheck & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
   deploy:
     name: Deploy app
+    needs: check    # 게이트 통과 후에만 배포
     runs-on: ubuntu-latest
     concurrency: deploy-group    # optional: ensure only one action runs at a time
     steps:

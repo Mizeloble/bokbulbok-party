@@ -81,6 +81,15 @@ export type RoomState = {
   id: string;
   hostToken: string;
   hostSocketId: string | null;
+  /**
+   * playerToken of the participant who currently holds host authority. Set when
+   * the original host (hostToken holder) joins, and reassigned by
+   * `promoteNextHost` when that host leaves for good — so a host closing their
+   * tab doesn't leave the room permanently unstartable. A rejoining player whose
+   * token equals this reclaims host, which also makes host reconnect survive
+   * without resending the secret hostToken.
+   */
+  hostPlayerToken: string | null;
   status: RoomStatus;
   gameId: GameId; // selected game (default 'marble')
   loserCount: number; // 1..3
@@ -148,6 +157,7 @@ export function createRoom(): { roomId: string; hostToken: string } {
     id,
     hostToken,
     hostSocketId: null,
+    hostPlayerToken: null,
     status: 'lobby',
     gameId: 'marble',
     loserCount: 1,
@@ -249,6 +259,29 @@ export function isHostToken(room: RoomState, token: string | null | undefined): 
   return !!token && token === room.hostToken;
 }
 
+/** True if `playerToken` currently holds host authority (original or promoted). */
+export function isHostPlayer(room: RoomState, token: string | null | undefined): boolean {
+  return !!token && token === room.hostPlayerToken;
+}
+
+/**
+ * Hand host authority to the longest-present connected real participant. Called
+ * when the current host leaves for good so the room isn't left permanently
+ * unstartable (only the host can pick a game / press start). Manual (no-device)
+ * and bot players are skipped — they have no socket to act as host. Returns the
+ * new host player, or null if nobody eligible remains (room will be reaped).
+ */
+export function promoteNextHost(room: RoomState): Player | null {
+  let next: Player | null = null;
+  for (const p of room.players.values()) {
+    if (!p.connected || p.manual || p.bot || p.socketId === null) continue;
+    if (!next || p.joinedAt < next.joinedAt) next = p;
+  }
+  room.hostPlayerToken = next ? next.playerToken : null;
+  room.hostSocketId = next ? next.socketId : null;
+  return next;
+}
+
 export function touch(room: RoomState) {
   room.lastActivityAt = Date.now();
   scheduleCleanup(room);
@@ -304,6 +337,10 @@ export function publicRoomState(room: RoomState) {
     status: room.status,
     gameId: room.gameId,
     loserCount: room.loserCount,
+    // Who holds host authority right now. Clients derive their own host UI from
+    // this (`myToken === hostPlayerToken`), so an auto-promotion after the host
+    // leaves flips the new host's controls on via the normal state broadcast.
+    hostPlayerToken: room.hostPlayerToken,
     players: snapshotPlayers(room),
     currentRound: room.currentRound
       ? {
