@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ko } from '@/lib/i18n';
 import { useRoomStore } from '@/store/room-store';
 import { GamePicker } from './GamePicker';
@@ -22,6 +22,19 @@ export function Lobby({ inviteUrl, onChangeNickname }: { inviteUrl: string; onCh
   const [manualValue, setManualValue] = useState('');
   const [manualError, setManualError] = useState<string | null>(null);
   const [manualBusy, setManualBusy] = useState(false);
+  // Show a one-off notice when host authority is handed to us (previous host left).
+  // Initial host (host from the start) never sees it — only a false→true flip.
+  const [promotedNotice, setPromotedNotice] = useState(false);
+  const prevIsHost = useRef(isHost);
+  useEffect(() => {
+    if (isHost && !prevIsHost.current) {
+      setPromotedNotice(true);
+      const t = setTimeout(() => setPromotedNotice(false), 5000);
+      prevIsHost.current = isHost;
+      return () => clearTimeout(t);
+    }
+    prevIsHost.current = isHost;
+  }, [isHost]);
 
   if (!state) return null;
 
@@ -125,6 +138,14 @@ export function Lobby({ inviteUrl, onChangeNickname }: { inviteUrl: string; onCh
       )}
 
       <section className="px-4 mt-5 space-y-5 flex-1 overflow-auto pb-32">
+        {promotedNotice && (
+          <div
+            role="status"
+            className="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-200"
+          >
+            {ko.lobby.becameHost}
+          </div>
+        )}
         {/* host controls first */}
         {isHost ? (
           <>

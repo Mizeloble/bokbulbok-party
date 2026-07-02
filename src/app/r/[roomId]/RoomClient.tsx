@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ko } from '@/lib/i18n';
 import { getSocket, disposeSocket } from '@/lib/socket-client';
+import { useWakeLock } from '@/lib/useWakeLock';
 import { loadIdentity, saveIdentity } from '@/lib/nickname-store';
 import { useRoomStore, type GameStartPayload, type PublicRoomState, type ResultPayload } from '@/store/room-store';
 import { Lobby } from '@/components/Lobby';
@@ -46,6 +47,14 @@ export default function RoomClient({
   // Transient connection-lost flag (mobile backgrounding / network blip) — drives a
   // non-blocking "reconnecting" banner so the screen doesn't silently freeze.
   const [connectionLost, setConnectionLost] = useState(false);
+  // Server told us it's restarting (deploy) — show a distinct notice; the socket
+  // will reconnect on its own once the new machine is up.
+  const [restarting, setRestarting] = useState(false);
+  // Device lost its network (airplane mode / dead zone) — distinct from a server
+  // blip so the copy can tell the user to check their own connection.
+  const [offline, setOffline] = useState(false);
+  // A reconnect that drags on: surface a manual refresh escape hatch.
+  const [slowReconnect, setSlowReconnect] = useState(false);
   const [errMsg, setErrMsg] = useState<string | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [busyJoin, setBusyJoin] = useState(false);
@@ -122,6 +131,15 @@ export default function RoomClient({
       // moment while switching rooms — drop anything not addressed to this room.
       if (s.id !== normalizedRoomId) return;
       setState(s);
+      // Host authority can change under us: the host left and we were auto-promoted
+      // (or the original host returned and reclaimed it). Derive from the
+      // authoritative state rather than trusting only the one-time join ack, so
+      // host controls appear/disappear on the normal state broadcast.
+      const { myToken: mt, isHost: wasHost } = useRoomStore.getState();
+      if (mt) {
+        const amHost = s.hostPlayerToken === mt;
+        if (amHost !== wasHost) setMe(mt, amHost);
+      }
       // Restore a missed `game:result` (user was off the room route when the round
       // ended) — result-status states carry ranking/losers.
       if (s.status === 'result' && s.currentRound?.ranking && s.currentRound.losers) {
@@ -166,17 +184,39 @@ export default function RoomClient({
         },
       );
     }
+    let slowTimer: ReturnType<typeof setTimeout> | null = null;
     function onConnect() {
       setConnectionLost(false);
+      setRestarting(false);
+      setSlowReconnect(false);
+      if (slowTimer) {
+        clearTimeout(slowTimer);
+        slowTimer = null;
+      }
       if (joinedOnceRef.current) rejoinSilently();
     }
     // Only surface the banner once we've joined — the first connect has its own
     // "connecting…" screen, and a pre-join drop shouldn't flash a scary banner.
     function onDisconnect() {
-      if (joinedOnceRef.current) setConnectionLost(true);
+      if (!joinedOnceRef.current) return;
+      setConnectionLost(true);
+      // If it doesn't come back quickly, offer a manual refresh escape hatch.
+      if (!slowTimer) slowTimer = setTimeout(() => setSlowReconnect(true), 6000);
+    }
+    function onServerShutdown() {
+      setRestarting(true);
     }
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
+    socket.on('server:shutdown', onServerShutdown);
+
+    // Device-level connectivity, distinct from a server-side blip — lets the copy
+    // point the user at their own network instead of implying our server is down.
+    const onOffline = () => setOffline(true);
+    const onOnline = () => setOffline(false);
+    if (typeof navigator !== 'undefined') setOffline(!navigator.onLine);
+    window.addEventListener('offline', onOffline);
+    window.addEventListener('online', onOnline);
 
     if (fresh) {
       // Force a brand-new identity (testing with shared-localStorage incognito windows, or
@@ -197,6 +237,10 @@ export default function RoomClient({
       socket.off('error', onErr);
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
+      socket.off('server:shutdown', onServerShutdown);
+      window.removeEventListener('offline', onOffline);
+      window.removeEventListener('online', onOnline);
+      if (slowTimer) clearTimeout(slowTimer);
     };
   }, [roomId, forceJoin, fresh, attemptJoin, setMe, setState, setGameStart, setResult, resetStore]);
 
@@ -212,6 +256,9 @@ export default function RoomClient({
   // sub-screen is showing, so participants stuck on the post-replay prompt are
   // covered too.
   const status = state?.status;
+  // Hold the screen awake through any active phase so a phone doesn't dim/lock
+  // mid-round and cost a player their input (reaction tap, tilt, charge taps).
+  useWakeLock(status === 'charging' || status === 'countdown' || status === 'playing');
   const router = useRouter();
   useEffect(() => {
     if (status !== 'result') return;
@@ -279,14 +326,29 @@ export default function RoomClient({
 
   return (
     <>
-      {connectionLost && (
+      {(connectionLost || offline || restarting) && (
         <div
           role="status"
           aria-live="polite"
-          className="fixed inset-x-0 top-0 z-[60] flex justify-center pointer-events-none pt-[max(env(safe-area-inset-top),8px)]"
+          className="fixed inset-x-0 top-0 z-[60] flex justify-center px-4 pointer-events-none pt-[max(env(safe-area-inset-top),8px)]"
         >
-          <div className="rounded-full bg-rose-500/90 px-4 py-1.5 text-xs font-semibold text-white shadow-lg backdrop-blur-sm">
-            {ko.errors.reconnecting}
+          <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-rose-500/90 px-4 py-1.5 text-xs font-semibold text-white shadow-lg backdrop-blur-sm">
+            <span>
+              {offline
+                ? ko.errors.offline
+                : restarting
+                  ? ko.errors.serverRestarting
+                  : ko.errors.reconnecting}
+            </span>
+            {(slowReconnect || offline) && (
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="rounded-full bg-white/20 px-2 py-0.5 font-bold active:scale-95"
+              >
+                {ko.errors.reconnectRetry}
+              </button>
+            )}
           </div>
         </div>
       )}

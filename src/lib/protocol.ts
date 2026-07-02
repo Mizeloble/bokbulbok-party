@@ -21,6 +21,9 @@ export type PublicRoomState = {
   status: RoomStatus;
   gameId: GameId;
   loserCount: number;
+  /** playerToken currently holding host authority (null if none). A client is
+   * host when its own token equals this — reassigned on host auto-promotion. */
+  hostPlayerToken: string | null;
   players: PublicPlayer[];
   currentRound?: {
     gameId: GameId;
@@ -131,6 +134,9 @@ export type ServerToClientEvents = {
   'trivia:standings': (payload: TriviaStandingsPayload) => void;
   'trivia:reschedule': (payload: TriviaReschedulePayload) => void;
   'marble:tick': (payload: MarbleTiltTickPayload) => void;
+  /** Sent to all clients right before the server exits (deploy/restart) so they
+   * can show a "restarting" notice instead of a silent freeze. No payload. */
+  'server:shutdown': (payload: Record<string, never>) => void;
 };
 
 export type ClientToServerEvents = {

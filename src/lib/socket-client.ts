@@ -10,8 +10,13 @@ export function getSocket(): Socket {
     autoConnect: true,
     transports: ['websocket', 'polling'],
     reconnection: true,
-    reconnectionAttempts: 10,
+    // A party round can outlast a long network blip (elevator, subway, phone
+    // locked). Giving up after a handful of tries left the client silently frozen
+    // with no path back, so keep retrying indefinitely with a capped backoff — the
+    // UI surfaces a manual refresh if it drags on.
+    reconnectionAttempts: Infinity,
     reconnectionDelay: 500,
+    reconnectionDelayMax: 4000,
   });
   return singleton;
 }

@@ -47,6 +47,40 @@ async function main() {
 
   attachSocketHandlers(io);
 
+  // Runtime fault net. This is a single in-memory instance: a hard crash drops
+  // every live room at once, so a fault isolated to one connection must NOT take
+  // the process down. Root-cause guards live in the socket handlers (try/catch);
+  // these only log what slips through and keep serving everyone else. Startup
+  // failures still exit — that's the `main().catch` below, before `listen`.
+  process.on('unhandledRejection', (reason) => {
+    console.error('[unhandledRejection]', reason);
+  });
+  process.on('uncaughtException', (err) => {
+    console.error('[uncaughtException]', err);
+  });
+
+  // Graceful shutdown (Fly sends SIGTERM on deploy/restart; Ctrl-C sends SIGINT).
+  // Tell every connected client a restart is coming so they can show a notice and
+  // reconnect once the new machine is up, then stop accepting work and exit. Rooms
+  // are memory-only and intentionally not persisted, so this is a courtesy notice,
+  // not a state save.
+  let shuttingDown = false;
+  const shutdown = (signal: string) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`> ${signal} received — shutting down`);
+    io.emit('server:shutdown', {});
+    // Give the notice a moment to flush, then close listeners and exit. Force-exit
+    // after a hard cap so a stuck connection can't block the deploy.
+    setTimeout(() => {
+      io.close();
+      httpServer.close(() => process.exit(0));
+      setTimeout(() => process.exit(0), 3000).unref();
+    }, 700);
+  };
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
+
   httpServer.listen(port, hostname, () => {
     console.log(`> Ready on http://${hostname}:${port} (dev=${dev})`);
   });
