@@ -44,11 +44,12 @@ jobs:
             --color B60205 --description "healthz 다운 자동 감지" --force
           existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --label uptime --state open --json number -q '.[0].number')
           if [ -z "$existing" ]; then
+            body=$(printf '%s\n\n%s' \
+              "3회 연속 \`$TARGET/healthz\` 200 응답 실패. 실행 로그: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+              "확인 순서: \`fly status -a bokbulbok-party\` → \`fly logs -a bokbulbok-party\` → 필요 시 \`fly machine restart\`. 복구되면 이 이슈는 다음 체크에서 자동으로 닫힘.")
             gh issue create --repo "$GITHUB_REPOSITORY" --label uptime \
               --title "🔴 healthz 응답 없음: $TARGET" \
-              --body "3회 연속 \`$TARGET/healthz\` 200 응답 실패. 실행 로그: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
-
-확인 순서: \`fly status -a bokbulbok-party\` → \`fly logs -a bokbulbok-party\` → 필요 시 \`fly machine restart\`. 복구되면 이 이슈는 다음 체크에서 자동으로 닫힘."
+              --body "$body"
           fi
           # 다운 상태를 워크플로 실패로 표시해 Actions 탭에서도 한눈에 보이게.
           exit 1
