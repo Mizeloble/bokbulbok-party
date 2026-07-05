@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { ko } from '@/lib/i18n';
 import { APP_VERSION } from '@/lib/version';
 
+// 의견 창구(구글폼 등) — 다른 공개 설정과 같은 env 게이팅 패턴. 미설정이면 링크 자체가 없음.
+const FEEDBACK_URL = process.env.NEXT_PUBLIC_FEEDBACK_URL;
+
 export function SiteFooter() {
   return (
     <footer className="py-4 pb-[max(env(safe-area-inset-bottom),16px)] text-xs text-zinc-600 text-center">
@@ -22,6 +25,19 @@ export function SiteFooter() {
         >
           {ko.legal.terms}
         </Link>
+        {FEEDBACK_URL ? (
+          <>
+            <span aria-hidden>·</span>
+            <a
+              href={FEEDBACK_URL}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="underline-offset-2 hover:underline hover:text-zinc-400"
+            >
+              {ko.legal.feedback}
+            </a>
+          </>
+        ) : null}
       </div>
       <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-1.5">
         <span>{ko.credit.org}</span>

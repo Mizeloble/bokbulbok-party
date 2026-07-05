@@ -1,0 +1,61 @@
+# 업타임 감시 — 외부 모니터링 서비스 가입 없이 GitHub Actions cron으로 /healthz를 찌른다.
+# 다운이면 `uptime` 라벨 이슈를 열고(→ GitHub 이메일 알림), 복구되면 자동으로 닫는다.
+#
+# 주기가 30분인 이유: scale-to-zero 구성에서 핑 자체가 머신을 깨우므로, 짧은 주기는
+# 사실상 상시가동이 되어 유휴 비용 0원 전제를 깨뜨린다. 30분이면 머신 가동률 ~20%.
+# (GitHub cron은 best-effort라 수 분 지연될 수 있음 — 이 용도엔 충분.)
+name: Uptime
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      # 도메인 이전 시 SITE_URL variable만 바꾸면 감시 대상도 함께 따라온다.
+      TARGET: ${{ vars.SITE_URL || 'https://bokbulbok-party.fly.dev' }}
+    steps:
+      - name: Ping /healthz (3회 재시도)
+        id: ping
+        run: |
+          for i in 1 2 3; do
+            # scale-to-zero 콜드스타트(머신 부팅 수 초)를 감안해 타임아웃 25초.
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 25 "$TARGET/healthz" || echo 000)
+            echo "attempt $i: HTTP $code"
+            if [ "$code" = "200" ]; then
+              echo "status=up" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "status=down" >> "$GITHUB_OUTPUT"
+
+      - name: 다운이면 이슈 열기 (이미 열려 있으면 생략)
+        if: steps.ping.outputs.status == 'down'
+        run: |
+          gh label create uptime --repo "$GITHUB_REPOSITORY" \
+            --color B60205 --description "healthz 다운 자동 감지" --force
+          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --label uptime --state open --json number -q '.[0].number')
+          if [ -z "$existing" ]; then
+            gh issue create --repo "$GITHUB_REPOSITORY" --label uptime \
+              --title "🔴 healthz 응답 없음: $TARGET" \
+              --body "3회 연속 \`$TARGET/healthz\` 200 응답 실패. 실행 로그: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+
+확인 순서: \`fly status -a bokbulbok-party\` → \`fly logs -a bokbulbok-party\` → 필요 시 \`fly machine restart\`. 복구되면 이 이슈는 다음 체크에서 자동으로 닫힘."
+          fi
+          # 다운 상태를 워크플로 실패로 표시해 Actions 탭에서도 한눈에 보이게.
+          exit 1
+
+      - name: 복구됐으면 열린 uptime 이슈 닫기
+        if: steps.ping.outputs.status == 'up'
+        run: |
+          for n in $(gh issue list --repo "$GITHUB_REPOSITORY" --label uptime --state open --json number -q '.[].number'); do
+            gh issue close "$n" --repo "$GITHUB_REPOSITORY" --comment "✅ healthz 200 복구 확인 ($TARGET)"
+          done
