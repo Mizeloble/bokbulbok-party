@@ -165,6 +165,9 @@ export function createRoom(): { roomId: string; hostToken: string } {
     lastActivityAt: Date.now(),
   };
   rooms.set(id, room);
+  // `[metric]` 라인은 DB 없이 fly logs grep으로 집계하는 유일한 트래픽 지표 —
+  // 포맷(key=value)을 바꾸면 기존 집계 명령이 깨진다.
+  console.log(`[metric] room_created room=${id} rooms=${rooms.size}`);
   if (process.env.NODE_ENV !== 'production') seedDevBots(room);
   // Start with the short unclaimed-room window; the first live `join` calls
   // `touch` → `scheduleCleanup`, upgrading it to the normal IDLE_MS lifecycle.

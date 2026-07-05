@@ -186,6 +186,8 @@ export function attachSocketHandlers(io: IO) {
       if (connectedPlayers.length < GAME.MIN_PLAYERS) return;
       if (room.status === 'charging' || room.status === 'countdown' || room.status === 'playing') return;
 
+      console.log(`[metric] round_started room=${room.id} game=${room.gameId} players=${connectedPlayers.length}`);
+
       // A round runner throwing mid-game would reject this async handler with no
       // catch — an unhandledRejection on the shared process. Contain it here: log
       // with room context and reset the room to lobby so the group can retry

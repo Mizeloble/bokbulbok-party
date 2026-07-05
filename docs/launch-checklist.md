@@ -20,9 +20,10 @@
 ### B. 등록할 GitHub repo variable (Settings → Secrets and variables → Actions → **Variables** 탭)
 | variable | 값 |
 |---|---|
-| `SITE_URL` | `https://bokbulbok-party.fly.dev` — 공유 미리보기(OG) 절대경로 기준. 안 넣으면 localhost로 깨짐 |
+| `SITE_URL` | `https://bokbulbok-party.fly.dev` — 공유 미리보기(OG) 절대경로 기준. 안 넣으면 localhost로 깨짐. 업타임 워크플로 감시 대상도 이 값을 따라감 |
 | `ANALYTICS_PROVIDER` | `cloudflare` (권장) / `plausible` / `ga` |
 | `CF_BEACON_TOKEN` / `PLAUSIBLE_DOMAIN` / `GA_ID` | 위 선택에 맞춰 하나 |
+| `FEEDBACK_URL` | (선택) 의견 창구 링크(구글폼 권장). 설정하면 푸터에 "의견 보내기" 노출, 미설정이면 링크 없음 |
 
 ### C. Fly secret (런타임)
 - [x] `fly secrets set ALLOWED_ORIGIN=https://bokbulbok-party.fly.dev` — 소켓 CORS 고정(`server.ts`). 동일출처라 게임엔 필수 아님(미스매치여도 same-origin 통과)이나 정확성 위해 설정됨.
@@ -32,6 +33,10 @@
 - [x] OG 미리보기 메타·이미지 정상 — `og:title=복불복`, `og:image` 절대경로→fly.dev, 실물 1200×630 PNG 렌더. (카카오톡 실물 캐시는 방 링크 직접 붙여 🎯 카드 확인 권장.)
 - [x] `/privacy`·`/terms` 정상(둘 다 200). (CF 대시보드 방문 집계는 로그인해 확인.)
 - [x] 광고 자리 비어 있고 동의 배너 안 뜸(adfit/adsense·consent 흔적 없음 — 광고 off라 정상).
+
+### E. 운영 관측 (코드에 포함, 별도 설정 불필요)
+- **업타임**: `.github/workflows/uptime.yml`이 30분마다 `/healthz` 체크 — 다운이면 `uptime` 라벨 이슈 자동 생성(GitHub 이메일 알림), 복구되면 자동 닫힘. 주기를 줄이면 scale-to-zero 머신이 계속 깨어 있게 되니 주의.
+- **트래픽 지표**: 방 생성·게임 시작마다 `[metric]` 로그 한 줄(DB 없음 원칙 유지). 집계: `fly logs -a bokbulbok-party | grep '\[metric\]'` — 도메인·광고 전환 판단("트래픽 붙었나")은 CF 페이지뷰가 아니라 이 수치로.
 
 ---
 

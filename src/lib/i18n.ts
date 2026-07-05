@@ -333,6 +333,7 @@ export const ko = {
   legal: {
     privacy: '개인정보 처리방침',
     terms: '이용약관',
+    feedback: '의견 보내기',
     backHome: '처음으로',
     updated: (d: string) => `최종 업데이트 ${d}`,
   },
