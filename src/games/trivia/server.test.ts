@@ -64,6 +64,34 @@ describe('buildQuizPlan', () => {
     );
     expect(firstIds.size).toBeGreaterThan(1);
   });
+
+  it('caps how much of a round one category can fill (~60%)', () => {
+    const mixed: QuizQuestion[] = Array.from({ length: 12 }, (_, i) => ({
+      id: `m${i}`,
+      category: i % 2 === 0 ? 'cat-a' : 'cat-b',
+      question: `mixed ${i}?`,
+      choices: [`m${i}-a`, `m${i}-b`, `m${i}-c`, `m${i}-d`] as [string, string, string, string],
+      correctIndex: 0,
+    }));
+    const cap = Math.max(1, Math.ceil(GAME.TRIVIA_QUESTION_COUNT * 0.6));
+    for (const seed of [1, 7, 42, 123, 999]) {
+      const counts = new Map<string, number>();
+      for (const q of buildQuizPlan(seed, mixed).questions) {
+        counts.set(q.category, (counts.get(q.category) ?? 0) + 1);
+      }
+      for (const [cat, n] of counts) {
+        expect(n, `seed ${seed} category ${cat}`).toBeLessThanOrEqual(cap);
+      }
+    }
+  });
+
+  it('still fills the round when the pool cannot honor the category cap', () => {
+    // POOL is single-category, so the cap alone can't fill the round — the
+    // fallback pass must top it up to the configured count.
+    const plan = buildQuizPlan(9, POOL);
+    expect(plan.questions).toHaveLength(GAME.TRIVIA_QUESTION_COUNT);
+    expect(new Set(plan.questions.map((q) => q.id)).size).toBe(GAME.TRIVIA_QUESTION_COUNT);
+  });
 });
 
 describe('computeQuizResult', () => {
