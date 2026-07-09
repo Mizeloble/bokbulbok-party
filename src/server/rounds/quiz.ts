@@ -18,6 +18,28 @@ const QUIZ_POOLS: Partial<Record<GameId, readonly QuizQuestion[]>> = {
   nonsense: NONSENSE_POOL_SORTED,
 };
 
+// 문항 품질 신호: 라운드가 끝날 때마다 문항별 응답/정답 수를 [metric] 로그로 남긴다.
+// 서버는 영속 저장소가 없으므로 집계는 로그에서(grep/awk) — 누적 정답률이 극단인 문항
+// (≈0%: 정답이 자의적, ≈100%: 시시함)을 골라 풀에서 퇴출하는 용도. 입고 게이트는
+// src/games/nonsense/CLAUDE.md 참고. answered는 실제 픽 수라 manual 플레이어(전부 null)는
+// 자연히 빠지고, players는 픽 행 수(manual 포함) 그대로다.
+function logQuestionStats(roomId: string, gameId: GameId, data: TriviaReplayData) {
+  const rows = Object.values(data.picks);
+  data.questions.forEach((q, i) => {
+    let answered = 0;
+    let correct = 0;
+    for (const picks of rows) {
+      const pick = picks[i];
+      if (pick === null || pick === undefined) continue;
+      answered++;
+      if (pick === q.correctIndex) correct++;
+    }
+    console.log(
+      `[metric] quiz_question room=${roomId} game=${gameId} qid=${q.id} answered=${answered} correct=${correct} players=${rows.length}`,
+    );
+  });
+}
+
 /**
  * Quiz round (trivia / nonsense): client-input game with N sequential question
  * phases. Pool is chosen by `room.gameId`; everything else is content-agnostic. Flow:
@@ -123,6 +145,7 @@ export async function runQuizRound(io: IO, room: RoomState) {
     room.status = 'result';
     io.to(room.id).emit('state', publicRoomState(room));
     emitResult(io, room, replay);
+    logQuestionStats(room.id, gameId, replay.data as TriviaReplayData);
   };
 
   // Per-question standings emit. Safe to call once per qi per round: if it fires
