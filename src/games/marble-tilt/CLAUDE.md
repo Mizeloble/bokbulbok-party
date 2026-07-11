@@ -1,7 +1,7 @@
 # games/marble-tilt/
 
 폰을 좌우로 기울여 자기 마블에 X축 힘을 가하는 **실시간 인터랙티브** 마블 레이스.
-같은 트랙(`../marble/lazygyu/maps.ts`)·물리(`Box2dPhysics`)·렌더 헬퍼(`../marble/render/*`)를 재사용하되, 시뮬레이션 모델만 다르다.
+같은 스테이지 풀(`../marble/stages.ts`, seed로 맵 선택)·물리(`Box2dPhysics`)·렌더 헬퍼(`../marble/render/*`)를 재사용하되, 시뮬레이션 모델만 다르다.
 
 ## 결정론 예외
 

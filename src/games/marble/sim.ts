@@ -1,6 +1,7 @@
 import { mulberry32 } from '../../lib/rng';
 import { Box2dPhysics } from './lazygyu/physics';
-import { stages } from './lazygyu/maps';
+import { pickStage } from './stages';
+import type { StageDef } from './lazygyu/maps';
 import type { MapEntityState } from './lazygyu/MapEntity';
 
 export type StaticEntity = {
@@ -122,7 +123,7 @@ export async function simulateRace(
   const physics = new Box2dPhysics(rng);
   await physics.init();
   try {
-    return await runSimulation(physics, players, rng, tieRng, chargeRatios);
+    return await runSimulation(physics, players, rng, tieRng, pickStage(seed), chargeRatios);
   } finally {
     // Free the world + all WASM-heap allocations — the box2d module is shared
     // across sims, so skipping this leaks a full race's bodies every round.
@@ -135,9 +136,9 @@ async function runSimulation(
   players: { playerToken: string }[],
   rng: () => number,
   tieRng: () => number,
+  stage: StageDef,
   chargeRatios?: Record<string, number>,
 ): Promise<SimulationResult> {
-  const stage = stages[0];
   physics.createStage(stage);
 
   const ratios = spawnMarbles(physics, players, rng, chargeRatios);
