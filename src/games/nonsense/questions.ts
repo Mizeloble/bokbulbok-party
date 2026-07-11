@@ -1341,6 +1341,72 @@ export const NONSENSE_POOL: readonly NonsenseQuestion[] = [
     correctIndex: 1,
     note: "궁 밖에서 '궁시렁궁시렁'.",
   },
+
+  // ── 웹 교차검증 추가분 (나무위키·뉴스 실검·다수 모음집에서 확인) ──────
+  {
+    id: 'pun-g-veg-city-sydney',
+    category: '말장난',
+    question: '채소장수가 가장 싫어하는 도시는?',
+    choices: ['시드니', '파리', '뉴욕', '베를린'],
+    correctIndex: 0,
+    note: "채소가 '시드니(시들다)'와 겹친 말장난 — 2019년 실검 화제.",
+  },
+  {
+    id: 'pun-g-drinker-city-cheongju',
+    category: '말장난',
+    question: '술을 좋아하는 사람이 가고 싶은 도시는?',
+    choices: ['경주', '전주', '청주', '광주'],
+    correctIndex: 2,
+    note: '맑은 술 청주(淸酒)와 도시 청주가 같은 말.',
+  },
+  {
+    id: 'pun-g-most-problems',
+    category: '말장난',
+    question: '진짜 문제투성이인 것은?',
+    choices: ['시험지', '일기장', '지도', '달력'],
+    correctIndex: 0,
+    note: '문제가 잔뜩 적힌 시험지.',
+  },
+  {
+    id: 'pun-g-not-beauty-minam',
+    category: '말장난',
+    question: '아무리 예뻐도 미녀 소리 못 듣는 사람은?',
+    choices: ['미남', '미인', '숙녀', '소녀'],
+    correctIndex: 0,
+    note: '남자라서 미녀가 아니라 미남.',
+  },
+  {
+    id: 'pun-g-hottest-sea',
+    category: '말장난',
+    question: '세상에서 가장 뜨거운 바다는?',
+    choices: ['열바다', '홍해', '지중해', '카리브해'],
+    correctIndex: 0,
+    note: "화가 나 '열받다'를 열바다로 비튼 말장난.",
+  },
+  {
+    id: 'pun-g-transparent-house',
+    category: '말장난',
+    question: '세상에서 제일 투명한 집은?',
+    choices: ['비닐하우스', '기와집', '통나무집', '초가집'],
+    correctIndex: 0,
+    note: '비닐로 지어 속이 다 비치는 비닐하우스.',
+  },
+  {
+    id: 'pun-g-violent-shampoo',
+    category: '말장난',
+    question: '세상에서 가장 폭력적인 샴푸는?',
+    choices: ['한방샴푸', '거품샴푸', '두피샴푸', '탈모샴푸'],
+    correctIndex: 0,
+    note: "'한 방' 먹이는 한방샴푸의 말장난.",
+  },
+  {
+    id: 'pun-g-ant-address',
+    category: '말장난',
+    question: '개미네 집 주소는?',
+    choices: ['허리도', '다리도', '머리도', '꼬리도'],
+    correctIndex: 0,
+    note: "개미 허리가 가늘어 '허리도 가늘군'을 주소처럼 비튼 말장난.",
+  },
 ];
 
 // id 사전순 정렬 — 추출 결정성을 풀의 삽입 순서와 분리한다(trivia와 동일 규약).
