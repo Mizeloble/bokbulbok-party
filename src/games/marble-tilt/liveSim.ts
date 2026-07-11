@@ -11,7 +11,7 @@
 
 import { mulberry32 } from '../../lib/rng';
 import { Box2dPhysics } from '../marble/lazygyu/physics';
-import { stages } from '../marble/lazygyu/maps';
+import { pickStage } from '../marble/stages';
 import { spawnMarbles } from '../marble/sim';
 import type { StaticEntity } from '../marble/sim';
 
@@ -149,7 +149,7 @@ export class MarbleTiltLiveSim {
   async init(): Promise<LiveIntroData> {
     const physics = new Box2dPhysics(this.rng);
     await physics.init();
-    const stage = stages[0];
+    const stage = pickStage(this.seed);
     physics.createStage(stage);
     spawnMarbles(physics, this.players, this.rng /* no chargeRatios for tilt */);
     physics.start();
