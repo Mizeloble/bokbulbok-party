@@ -64,20 +64,43 @@ export type TriviaReplayData = {
   picks: Record<string, Array<0 | 1 | 2 | 3 | null>>;
 };
 
+/**
+ * Draw `count` questions without replacement, spreading across categories so a
+ * single round doesn't land 4-5 questions of the same flavor. A category may fill
+ * at most ~60% of the round (3 of 5); if the pool is too small or too skewed to
+ * honor that, a second pass fills the remaining slots ignoring the cap, so the
+ * round is always `min(count, pool.length)` questions.
+ */
 function pickQuestions(
   rng: () => number,
   count: number,
   sortedPool: readonly QuizQuestion[],
 ): QuizQuestion[] {
   const pool = [...sortedPool];
-  const n = Math.min(count, pool.length);
-  for (let i = 0; i < n; i++) {
-    const j = i + Math.floor(rng() * (pool.length - i));
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
     const tmp = pool[i];
     pool[i] = pool[j];
     pool[j] = tmp;
   }
-  return pool.slice(0, n);
+  const n = Math.min(count, pool.length);
+  const cap = Math.max(1, Math.ceil(n * 0.6));
+  const picked: QuizQuestion[] = [];
+  const pickedIds = new Set<string>();
+  const perCategory = new Map<string, number>();
+  for (const q of pool) {
+    if (picked.length >= n) break;
+    const used = perCategory.get(q.category) ?? 0;
+    if (used >= cap) continue;
+    picked.push(q);
+    pickedIds.add(q.id);
+    perCategory.set(q.category, used + 1);
+  }
+  for (const q of pool) {
+    if (picked.length >= n) break;
+    if (!pickedIds.has(q.id)) picked.push(q);
+  }
+  return picked;
 }
 
 function shuffleChoices(

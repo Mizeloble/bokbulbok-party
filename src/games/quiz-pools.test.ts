@@ -37,4 +37,28 @@ describe.each(POOLS)('$name question pool', ({ pool }) => {
       if (q.note) expect(q.note.length, `${q.id} note`).toBeLessThanOrEqual(MAX_NOTE);
     }
   });
+
+  it('has no duplicate question stems', () => {
+    const seen = new Map<string, string>();
+    for (const q of pool) {
+      expect(seen.get(q.question), `${q.id} duplicates ${seen.get(q.question)}`).toBeUndefined();
+      seen.set(q.question, q.id);
+    }
+  });
+});
+
+// 넌센스 전용 게이트(questions.ts 헤더의 입고 게이트 5번): 같은 정답이 두 문항에 있으면
+// 같은 농담의 재탕이다(예: 과일 '배'가 두 번). trivia는 사실 기반이라 정답 중복(파리,
+// 이집트 등)이 정상이므로 여기서만 검사한다. 숫자로 시작하는 답('3개', '9명')은 개수
+// 문항끼리의 우연한 충돌이라 제외.
+describe('nonsense answer uniqueness', () => {
+  it('never reuses a (non-numeric) correct answer across questions', () => {
+    const seen = new Map<string, string>();
+    for (const q of NONSENSE_POOL) {
+      const answer = q.choices[q.correctIndex];
+      if (/^[0-9]/.test(answer)) continue;
+      expect(seen.get(answer), `${q.id} reuses answer "${answer}" of ${seen.get(answer)}`).toBeUndefined();
+      seen.set(answer, q.id);
+    }
+  });
 });

@@ -6,7 +6,7 @@
 - ranking은 `computeResult` 안에서만 결정. Renderer는 받은 `schedule`/`questions`만 보고 페이즈 분기.
 
 ## 결정성
-- `buildQuizPlan(seed, sortedPool)` — mulberry32 단일 스트림으로 (1) 풀에서 N문제 비복원 추출, (2) 각 문제 보기 4개 셔플. 같은 seed·같은 풀이면 항상 같은 문제·같은 보기 순서.
+- `buildQuizPlan(seed, sortedPool)` — mulberry32 단일 스트림으로 (1) 풀에서 N문제 비복원 추출(카테고리별 라운드 점유율 ~60% 상한, 풀이 못 채우면 상한 무시 후 충원), (2) 각 문제 보기 4개 셔플. 같은 seed·같은 풀이면 항상 같은 문제·같은 보기 순서.
 - 풀(`TRIVIA_POOL`)은 `id` 사전순(`TRIVIA_POOL_SORTED`)으로 정렬한 뒤 추출. 풀 끝에 새 문제를 추가해도 기존 id의 추출 매핑은 안 깨짐.
 - 동률 tie-break: 점수 DESC → 정답 응답속도 합 ASC → `playerToken` 사전순.
 
