@@ -63,6 +63,15 @@ export function drawScene(
   const cullPad = 50;
   const offScreen = (sxp: number, syp: number) =>
     syp < py - cullPad || syp > py + ph + cullPad || sxp < px - cullPad || sxp > px + pw + cullPad;
+  // Cohen–Sutherland outcode: a segment is definitely outside the viewport iff both
+  // endpoints share an outside half-plane (outcode AND ≠ 0). Point-based culling is
+  // not enough — a long wall segment (e.g. spawn walls spanning y −300→30) crosses
+  // the zoomed-in viewport with both endpoints off-screen and would vanish entirely.
+  const outcode = (sxp: number, syp: number) =>
+    (sxp < px - cullPad ? 1 : 0) |
+    (sxp > px + pw + cullPad ? 2 : 0) |
+    (syp < py - cullPad ? 4 : 0) |
+    (syp > py + ph + cullPad ? 8 : 0);
   for (const e of polylineEntities) {
     if (e.shape.type !== 'polyline') continue;
     const ex = e.x;
@@ -70,32 +79,33 @@ export function drawScene(
     const points = e.shape.points;
     ctx.beginPath();
     let started = false;
+    let prevSx = 0;
+    let prevSy = 0;
+    let prevOc = 0;
     for (let i = 0; i < points.length; i++) {
       const [px2, py2] = points[i];
       const sxp = (ex + px2) * scale + offsetX;
       const syp = (ey + py2) * scale + offsetY;
-      if (offScreen(sxp, syp)) {
-        // Cull: only break the path if the neighboring point is also off-screen,
-        // otherwise we'd drop the segment that crosses the viewport edge.
-        const np = points[i + 1];
-        const pp = points[i - 1];
-        const nextOff = !np || offScreen((ex + np[0]) * scale + offsetX, (ey + np[1]) * scale + offsetY);
-        const prevOff = !pp || offScreen((ex + pp[0]) * scale + offsetX, (ey + pp[1]) * scale + offsetY);
-        if (nextOff && prevOff) {
+      const oc = outcode(sxp, syp);
+      if (i > 0) {
+        if ((oc & prevOc) !== 0) {
+          // Segment fully outside one edge — break the path here.
           if (started) {
             ctx.stroke();
             ctx.beginPath();
             started = false;
           }
-          continue;
+        } else {
+          if (!started) {
+            ctx.moveTo(prevSx, prevSy);
+            started = true;
+          }
+          ctx.lineTo(sxp, syp);
         }
       }
-      if (!started) {
-        ctx.moveTo(sxp, syp);
-        started = true;
-      } else {
-        ctx.lineTo(sxp, syp);
-      }
+      prevSx = sxp;
+      prevSy = syp;
+      prevOc = oc;
     }
     if (started) ctx.stroke();
   }
