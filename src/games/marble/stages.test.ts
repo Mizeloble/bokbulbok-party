@@ -33,17 +33,18 @@ describe('pickStage', () => {
   });
 });
 
-describe('Zigzag Falls (new shared stage)', () => {
-  const ZIGZAG_INDEX = STAGE_POOL.findIndex((s) => s.title === 'Zigzag Falls');
+// 신규 공용 스테이지 완주 검증 — 풀에 맵을 추가하면 여기 목록에도 title을 추가한다.
+describe.each(['Zigzag Falls', 'Bumper Canyon'])('%s (new shared stage)', (title) => {
+  const STAGE_INDEX = STAGE_POOL.findIndex((s) => s.title === title);
 
   it('is registered in the shared pool', () => {
-    expect(ZIGZAG_INDEX).toBeGreaterThanOrEqual(0);
+    expect(STAGE_INDEX).toBeGreaterThanOrEqual(0);
   });
 
   it(
     'completes a 4-player race with a full ranking',
     async () => {
-      const seed = seedForStage(ZIGZAG_INDEX);
+      const seed = seedForStage(STAGE_INDEX);
       const res = await marbleServer.computeResult({ seed, players: players('a', 'b', 'c', 'd'), loserCount: 1 });
       expect([...res.ranking].sort()).toEqual(['a', 'b', 'c', 'd']);
       expect(res.losers).toEqual(res.ranking.slice(-1));
@@ -51,7 +52,7 @@ describe('Zigzag Falls (new shared stage)', () => {
       expect(res.durationMs).toBeLessThan(60_000);
       const data = res.data as MarbleReplayData;
       // 새 맵의 goalY가 리플레이에 실려 나가는지 (클라 카메라/골 라인 기준값)
-      expect(data.goalY).toBe(108);
+      expect(data.goalY).toBe(STAGE_POOL[STAGE_INDEX].goalY);
     },
     SIM_TIMEOUT,
   );
@@ -59,7 +60,7 @@ describe('Zigzag Falls (new shared stage)', () => {
   it(
     'completes a 12-player race (party-size load) on a different seed',
     async () => {
-      const seed = seedForStage(ZIGZAG_INDEX, seedForStage(ZIGZAG_INDEX) + 1);
+      const seed = seedForStage(STAGE_INDEX, seedForStage(STAGE_INDEX) + 1);
       const tokens = Array.from({ length: 12 }, (_, i) => `p${i}`);
       const res = await marbleServer.computeResult({ seed, players: players(...tokens), loserCount: 1 });
       expect([...res.ranking].sort()).toEqual([...tokens].sort());
