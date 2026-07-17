@@ -12,9 +12,12 @@ primary_region = 'nrt'
   internal_port = 3000
   force_https = true
   # 평소: scale-to-zero (유휴 시 0대 → 비용 ~0). 요청 오면 auto_start로 깨어남.
+  # 'suspend': 풀 부팅(VM+node 콜드 로드 ~6s, 512MB면 지원) 대신 메모리 스냅샷
+  # 재개(~1s). 스냅샷 실패 시 Fly가 stop으로 폴백하고, 그땐 server.ts의
+  # early-listen이 proxy 타임아웃(~8s) 안을 지켜준다.
   # 홍보 런치 때만 min 1 로 올려 1대 상시가동(콜드스타트 제거) → 끝나면 다시 0.
   # 자세한 절차는 docs/promo/PLAN.md §4-A.
-  auto_stop_machines = 'stop'
+  auto_stop_machines = 'suspend'
   auto_start_machines = true
   min_machines_running = 0
   processes = ['app']
