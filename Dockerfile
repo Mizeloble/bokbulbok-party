@@ -56,10 +56,11 @@ ENV PORT=3000
 COPY --from=build /app/.next ./.next
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/server.ts ./server.ts
+COPY --from=build /app/dist ./dist
 COPY --from=build /app/next.config.js ./next.config.js
-COPY --from=build /app/tsconfig.json ./tsconfig.json
-COPY --from=build /app/src ./src
 COPY --from=build /app/public ./public
 EXPOSE 3000
-CMD ["npm", "start"]
+# 콜드스타트 단축: 서버 코드는 빌드 시 dist/server.mjs로 사전 번들(build:server).
+# 런타임 tsx 트랜스파일·npm 래퍼를 없애 scale-to-zero 기상 시간을 fly proxy
+# 타임아웃(~8s) 안으로 유지한다. tsx로 직접 실행 금지.
+CMD ["node", "dist/server.mjs"]
