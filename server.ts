@@ -11,17 +11,25 @@ const hostname = '0.0.0.0';
 async function main() {
   const app = next({ dev, hostname, port });
   const handle = app.getRequestHandler();
-  await app.prepare();
+  // Deliberately NOT awaited before listen: on Fly scale-to-zero the proxy only
+  // retries the TCP connect for ~8s, while Next's prepare() takes several seconds
+  // on a cold shared-cpu machine. Binding the port first makes the machine
+  // reachable immediately; early requests simply wait on this promise inside an
+  // established connection (which the proxy holds far longer). A prepare()
+  // failure still exits below — same contract as awaiting it here.
+  const ready = app.prepare();
 
-  const httpServer = createServer((req, res) => {
+  const httpServer = createServer(async (req, res) => {
     const parsedUrl = parse(req.url ?? '/', true);
     // Liveness / warmup probe for uptime pings and launch-day checks. Answered
-    // here (before Next) so it stays cheap and never touches room state.
+    // here (before Next, before `ready`) so it stays cheap and never touches
+    // room state.
     if (parsedUrl.pathname === '/healthz') {
       res.writeHead(200, { 'content-type': 'text/plain' });
       res.end('ok');
       return;
     }
+    await ready;
     return handle(req, res, parsedUrl);
   });
 
@@ -82,8 +90,17 @@ async function main() {
   process.on('SIGINT', () => shutdown('SIGINT'));
 
   httpServer.listen(port, hostname, () => {
-    console.log(`> Ready on http://${hostname}:${port} (dev=${dev})`);
+    console.log(`> Listening on http://${hostname}:${port} (dev=${dev})`);
   });
+  // Startup failure must still crash the process (listen already succeeded, so
+  // main().catch can't see this) — a half-alive server that 500s every page is
+  // worse than letting Fly restart the machine.
+  ready
+    .then(() => console.log(`> Ready on http://${hostname}:${port} (dev=${dev})`))
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
 }
 
 main().catch((err) => {
