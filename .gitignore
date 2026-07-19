@@ -11,3 +11,6 @@ tsconfig.tsbuildinfo
 
 # Claude Code per-project state
 .claude/
+
+# 서버 번들 산출물 (npm run build:server)
+dist/
