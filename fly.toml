@@ -27,6 +27,13 @@ primary_region = 'nrt'
     hard_limit = 200
     soft_limit = 150
 
+# 트래픽 카운터(src/server/metrics.ts)를 Fly 관리형 Prometheus로 수집 —
+# 로그 보관(~100줄)과 무관하게 수개월 조회 가능. suspend 중엔 스크레이프가
+# 조용히 실패하지만 잠든 동안엔 이벤트도 없으므로 무손실에 가깝다.
+[metrics]
+  port = 3000
+  path = '/metrics'
+
 [[vm]]
   size = 'shared-cpu-1x'
   memory = '512mb'

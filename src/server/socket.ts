@@ -19,6 +19,7 @@ import { ko } from '../lib/i18n';
 import { GAME, NICKNAME, ROOM, SOCKET_RATE } from '../lib/constants';
 import { GAME_META, isLiveGame, isQuizGame, type GameId } from '../games/types';
 import { checkRateLimit } from './rate-limit';
+import { incCounter } from './metrics';
 import type { IO } from './rounds/shared';
 import { startChargingPhase } from './rounds/charge';
 import { runRound } from './rounds/standard';
@@ -187,6 +188,7 @@ export function attachSocketHandlers(io: IO) {
       if (room.status === 'charging' || room.status === 'countdown' || room.status === 'playing') return;
 
       console.log(`[metric] round_started room=${room.id} game=${room.gameId} players=${connectedPlayers.length}`);
+      incCounter('bbk_rounds_started_total', { game: room.gameId });
 
       // A round runner throwing mid-game would reject this async handler with no
       // catch — an unhandledRejection on the shared process. Contain it here: log

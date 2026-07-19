@@ -1,5 +1,8 @@
 import { createServer } from 'node:http';
 import { parse } from 'node:url';
+// 의존성 제로 모듈이라 콜드스타트 계약(아래) 안에서 정적 import 허용 —
+// 소켓 청크와 같은 인스턴스를 공유해야 카운터가 한 곳에 쌓인다.
+import { renderMetrics } from './src/server/metrics';
 import type { Server as IOServer } from 'socket.io';
 
 const dev = process.env.NODE_ENV !== 'production';
@@ -24,6 +27,14 @@ const httpServer = createServer(async (req, res) => {
   if (parsedUrl.pathname === '/healthz') {
     res.writeHead(200, { 'content-type': 'text/plain' });
     res.end('ok');
+    return;
+  }
+  // 트래픽 카운터 노출 — fly.toml [metrics]가 이 경로를 스크레이프해 Fly
+  // Prometheus에 장기 보관한다(집계 쿼리는 docs/launch-checklist.md §E).
+  // 집계값뿐이라 공개돼도 무해. healthz처럼 `ready` 앞에서 답해 항상 싸게.
+  if (parsedUrl.pathname === '/metrics') {
+    res.writeHead(200, { 'content-type': 'text/plain; version=0.0.4' });
+    res.end(renderMetrics());
     return;
   }
   const handle = await ready;

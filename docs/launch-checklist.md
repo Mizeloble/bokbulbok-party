@@ -36,7 +36,9 @@
 
 ### E. 운영 관측 (코드에 포함, 별도 설정 불필요)
 - **업타임**: `.github/workflows/uptime.yml`이 30분마다 `/healthz` 체크 — 다운이면 `uptime` 라벨 이슈 자동 생성(GitHub 이메일 알림), 복구되면 자동 닫힘. 주기를 줄이면 scale-to-zero 머신이 계속 깨어 있게 되니 주의.
-- **트래픽 지표**: 방 생성·게임 시작마다 `[metric]` 로그 한 줄(DB 없음 원칙 유지). 집계: `fly logs -a bokbulbok-party | grep '\[metric\]'` — 도메인·광고 전환 판단("트래픽 붙었나")은 CF 페이지뷰가 아니라 이 수치로.
+- **트래픽 지표**: 방 생성·게임 시작을 인메모리 카운터(`src/server/metrics.ts`)로 세고 `/metrics`로 노출 → fly.toml `[metrics]`가 Fly 관리형 Prometheus로 수집(수개월 보관, DB 없음 원칙 유지). `[metric]` 로그 라인은 실시간 확인용으로 유지되지만 fly 로그 보관이 ~100줄뿐이라 집계엔 못 쓴다. 도메인·광고 전환 판단("트래픽 붙었나")은 CF 페이지뷰가 아니라 이 수치로.
+  - 최근 30일 방 생성: `curl -s "https://api.fly.io/prometheus/personal/api/v1/query" --data-urlencode 'query=sum(increase(bbk_rooms_created_total{app="bokbulbok-party"}[30d]))' -H "Authorization: FlyV1 $(fly auth token)"`
+  - 게임별 라운드 수: 같은 명령에서 쿼리만 `sum by (game) (increase(bbk_rounds_started_total{app="bokbulbok-party"}[30d]))`
 
 ---
 
