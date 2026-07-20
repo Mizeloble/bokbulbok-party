@@ -46,7 +46,7 @@ export function ResultShareButton({
       type="button"
       onClick={onShare}
       disabled={status === 'busy'}
-      className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/[0.06] border border-white/[0.1] text-zinc-200 font-bold text-sm active:scale-[0.98] disabled:opacity-60"
+      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/[0.06] border border-white/[0.1] text-zinc-200 font-bold text-sm active:scale-[0.98] disabled:opacity-60"
     >
       <span aria-hidden>🎯</span>
       <span>{label}</span>

@@ -22,11 +22,11 @@
 
 ## Tier 1 — 제품: 공유 고리 완성 (최우선 작업)
 
-1. [ ] **결과 공유 카드** ⭐ — 꼴찌 결정 순간 → "OO님이 오늘 벌칙 🎯 / 복불복" 이미지 카드 → 한 탭 공유·저장. **단톡방에 브랜드를 박는 핵심.** 문구는 i18n([`src/lib/i18n.ts`](../src/lib/i18n.ts))에만.
+1. [x] **결과 공유 카드** ⭐ — `src/lib/share-card.ts` + `ResultShareButton`으로 구현됨(방식 A). — 꼴찌 결정 순간 → "OO님이 오늘 벌칙 🎯 / 복불복" 이미지 카드 → 한 탭 공유·저장. **단톡방에 브랜드를 박는 핵심.** 문구는 i18n([`src/lib/i18n.ts`](../src/lib/i18n.ts))에만.
    - ⚠️ **데이터 경로 주의(적대적 검증으로 교정됨)**: 방 상태는 메모리 전용 + 유휴 GC([`server/CLAUDE.md`](../src/server/CLAUDE.md) DB 금지 불변조건)이고 OG는 소셜에 캐시되므로, **서버 OG 라우트가 방 상태를 읽어 카드를 만드는 방식은 불가**. 결과 데이터는 이미 클라이언트에 있으니 둘 중 하나로:
      - **(A) 클라이언트 캔버스 렌더(권장)** — 결과 순간 client에서 이미지 그려 `toBlob` → `navigator.share`. 서버·영속성 불필요.
      - **(B) URL에 결과 인코딩** → 무상태 `next/og` 라우트가 쿼리 파라미터로 렌더(Pretendard 폰트 주입 기법만 재사용, 방 `Map` 미접근).
-2. [ ] **결과 화면 CTA 강화** — `다시 하기` 옆에 "친구 부르기/재공유" 버튼([`InviteSheet`](../src/components/InviteSheet.tsx) 재사용).
+2. [x] **결과 화면 CTA 강화** — 결과 공유 옆 "친구 부르기" 버튼으로 [`InviteSheet`](../src/components/InviteSheet.tsx) 재사용(v2.12.0).
 3. [ ] **외울 수 있는 진입점(도메인)** — `bokbulbok-party.fly.dev`는 입으로 못 옮긴다. 짧은 도메인이 바이럴의 전제. [launch-checklist "나중: 도메인"](launch-checklist.md) 항목과 동일 작업(`SITE_URL`/`ALLOWED_ORIGIN` 교체).
 
 ## Tier 2 — 채널 (무료·한국 특화, Tier 1 이후)

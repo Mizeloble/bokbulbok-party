@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ko } from '@/lib/i18n';
 import { isValidRoomId, normalizeRoomId } from '@/lib/ids';
@@ -12,6 +13,34 @@ import { Logo } from '@/components/Logo';
 
 // 랜딩 라인업은 로비 GamePicker와 같은 출처(GAME_META) — 활성 게임만, 같은 순서.
 const GAME_IDS = (Object.keys(GAME_META) as GameId[]).filter((id) => GAME_META[id].enabled);
+
+// 구조화 데이터(검색 리치 결과용) — FAQ는 아래 가시 섹션과 같은 출처(i18n).
+// 클라이언트 컴포넌트지만 SSR로 초기 HTML에 포함되므로 크롤러가 읽는다.
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+const JSON_LD = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebApplication',
+      name: ko.app.title,
+      url: siteUrl,
+      description: ko.app.metaDescription,
+      applicationCategory: 'GameApplication',
+      operatingSystem: 'Any',
+      inLanguage: 'ko',
+      isAccessibleForFree: true,
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'KRW' },
+    },
+    {
+      '@type': 'FAQPage',
+      mainEntity: ko.landing.faq.map((f) => ({
+        '@type': 'Question',
+        name: f.q,
+        acceptedAnswer: { '@type': 'Answer', text: f.a },
+      })),
+    },
+  ],
+});
 
 export default function LandingPage() {
   const router = useRouter();
@@ -121,18 +150,27 @@ export default function LandingPage() {
             </p>
             <ul className="grid grid-cols-2 gap-2">
               {GAME_IDS.map((id) => (
-                <li key={id} className="surface flex items-center gap-2.5 rounded-xl px-3 py-2.5">
-                  <span className="text-xl leading-none" aria-hidden>
-                    {GAME_META[id].emoji}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block truncate text-[13px] font-medium text-zinc-200">
-                      {ko.games[id]}
+                <li key={id}>
+                  {/* 게임 소개 페이지 링크 — 검색 유입 페이지로의 내부 링크 겸 상세 규칙 안내 */}
+                  <Link
+                    href={`/games/${id}`}
+                    className="surface flex items-center gap-2.5 rounded-xl px-3 py-2.5 active:scale-[0.98]"
+                  >
+                    <span className="text-xl leading-none" aria-hidden>
+                      {GAME_META[id].emoji}
                     </span>
-                    <span className="block truncate text-[10px] text-zinc-500">
-                      {gameSubLabel(id)}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[13px] font-medium text-zinc-200">
+                        {ko.games[id]}
+                      </span>
+                      <span className="block truncate text-[10px] text-zinc-500">
+                        {gameSubLabel(id)}
+                      </span>
                     </span>
-                  </span>
+                    <span className="text-zinc-600 text-sm" aria-hidden>
+                      ›
+                    </span>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -178,10 +216,37 @@ export default function LandingPage() {
             )}
           </div>
 
+          {/* FAQ — 검색 유입용 콘텐츠(FAQPage JSON-LD와 같은 출처). 접힌 상태로 조용히. */}
+          <div className="space-y-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+              {ko.landing.faqTitle}
+            </p>
+            <ul className="space-y-1.5">
+              {ko.landing.faq.map((f) => (
+                <li key={f.q}>
+                  <details className="surface group rounded-xl px-3.5 py-2.5">
+                    <summary className="flex cursor-pointer select-none list-none items-center justify-between gap-2 text-[13px] font-medium text-zinc-300">
+                      <span>{f.q}</span>
+                      <span
+                        className="text-zinc-600 transition-transform group-open:rotate-180"
+                        aria-hidden
+                      >
+                        ▾
+                      </span>
+                    </summary>
+                    <p className="mt-2 text-xs leading-relaxed text-zinc-400">{f.a}</p>
+                  </details>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           <AdSlot placement="landing" width={320} height={50} />
         </div>
         <SiteFooter />
       </main>
+
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON_LD }} />
 
       {/* 하단 고정 CTA — 스크롤 어디서든 즉시 시작. 노치/홈인디케이터 회피. */}
       <div className="fixed inset-x-0 bottom-0 z-50 bg-gradient-to-t from-zinc-950 via-zinc-950/95 to-transparent px-6 pt-6 pb-[max(env(safe-area-inset-bottom),16px)]">

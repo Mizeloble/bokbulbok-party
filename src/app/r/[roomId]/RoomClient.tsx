@@ -418,6 +418,7 @@ export default function RoomClient({
       {showResult && (
         <ResultScreen
           onReplay={skipResultGate || isMarbleTiltGame ? undefined : handleReplay}
+          inviteUrl={inviteUrl}
         />
       )}
 

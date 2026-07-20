@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ko } from '@/lib/i18n';
 import { useRoomStore } from '@/store/room-store';
 import { AdSlot } from './AdSlot';
+import { InviteSheet } from './InviteSheet';
 import { ResultShareButton } from './ResultShareButton';
 import { TriviaDetailPanel } from './TriviaDetailPanel';
 import { useConfetti } from './useConfetti';
@@ -15,7 +16,10 @@ import type { TriviaReplayData } from '@/games/trivia/server';
 import { gameCategory, isQuizGame } from '@/games/types';
 import clsx from 'clsx';
 
-export function ResultScreen({ onReplay }: { onReplay?: () => void } = {}) {
+export function ResultScreen({
+  onReplay,
+  inviteUrl,
+}: { onReplay?: () => void; inviteUrl?: string } = {}) {
   const result = useRoomStore((s) => s.result);
   const state = useRoomStore((s) => s.state);
   const myToken = useRoomStore((s) => s.myToken);
@@ -23,6 +27,7 @@ export function ResultScreen({ onReplay }: { onReplay?: () => void } = {}) {
   const gameStart = useRoomStore((s) => s.gameStart);
   const router = useRouter();
   const [showRanking, setShowRanking] = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   useConfetti(canvasRef);
@@ -118,8 +123,21 @@ export function ResultScreen({ onReplay }: { onReplay?: () => void } = {}) {
           {iLost ? ko.result.youLost : ko.result.youWon}
         </div>
 
-        {/* 결과 카드 공유 — 호스트·게스트 공통. 단톡방으로 들고 나가는 바이럴 고리 */}
-        <ResultShareButton losers={losers} />
+        {/* 결과 카드 공유 + 재초대 — 호스트·게스트 공통. 단톡방으로 들고 나가는 바이럴
+            고리(공유)와 다음 라운드에 늦은 친구를 합류시키는 고리(초대). */}
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          <ResultShareButton losers={losers} />
+          {inviteUrl && (
+            <button
+              type="button"
+              onClick={() => setShowInvite(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/[0.06] border border-white/[0.1] text-zinc-200 font-bold text-sm active:scale-[0.98]"
+            >
+              <span aria-hidden>👥</span>
+              <span>{ko.result.invite}</span>
+            </button>
+          )}
+        </div>
 
         {/* Bottom actions — host primary grid vs guest secondary row */}
         {isHost ? (
@@ -243,6 +261,10 @@ export function ResultScreen({ onReplay }: { onReplay?: () => void } = {}) {
           );
         })()}
       </div>
+
+      {showInvite && inviteUrl && (
+        <InviteSheet url={inviteUrl} onClose={() => setShowInvite(false)} />
+      )}
     </main>
   );
 }

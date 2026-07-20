@@ -12,9 +12,21 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: ko.app.title,
+  // 검색 결과엔 키워드 포함 metaTitle, 공유 카드(OG)엔 짧은 브랜드 title.
+  title: ko.app.metaTitle,
   description: ko.app.metaDescription,
   applicationName: ko.app.title,
+  keywords: [
+    '복불복',
+    '벌칙 정하기',
+    '술게임',
+    '파티게임',
+    '술자리 게임',
+    'MT 게임',
+    '회식 게임',
+    '벌칙 게임',
+    '마블 레이스',
+  ],
   // og:image / twitter:image는 app/opengraph-image.tsx가 자동 주입.
   openGraph: {
     type: 'website',
