@@ -10,6 +10,10 @@ import './globals.css';
 // 본인 도메인 지정. 미설정 시 로컬 기준(개발).
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
+// 서치콘솔 소유 확인 메타 — 다른 공개 설정과 같은 env 게이팅. 미설정이면 태그 미출력.
+const GOOGLE_SITE_VERIFICATION = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
+const NAVER_SITE_VERIFICATION = process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION;
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   // 검색 결과엔 키워드 포함 metaTitle, 공유 카드(OG)엔 짧은 브랜드 title.
@@ -27,6 +31,12 @@ export const metadata: Metadata = {
     '벌칙 게임',
     '마블 레이스',
   ],
+  verification: {
+    ...(GOOGLE_SITE_VERIFICATION ? { google: GOOGLE_SITE_VERIFICATION } : {}),
+    ...(NAVER_SITE_VERIFICATION
+      ? { other: { 'naver-site-verification': NAVER_SITE_VERIFICATION } }
+      : {}),
+  },
   // og:image / twitter:image는 app/opengraph-image.tsx가 자동 주입.
   openGraph: {
     type: 'website',

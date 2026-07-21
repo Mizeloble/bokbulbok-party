@@ -53,5 +53,7 @@ jobs:
           --build-arg NEXT_PUBLIC_CF_BEACON_TOKEN="${{ vars.CF_BEACON_TOKEN }}"
           --build-arg NEXT_PUBLIC_PLAUSIBLE_DOMAIN="${{ vars.PLAUSIBLE_DOMAIN }}"
           --build-arg NEXT_PUBLIC_GA_ID="${{ vars.GA_ID }}"
+          --build-arg NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION="${{ vars.GOOGLE_SITE_VERIFICATION }}"
+          --build-arg NEXT_PUBLIC_NAVER_SITE_VERIFICATION="${{ vars.NAVER_SITE_VERIFICATION }}"
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

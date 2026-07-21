@@ -24,6 +24,8 @@
 | `ANALYTICS_PROVIDER` | `cloudflare` (권장) / `plausible` / `ga` |
 | `CF_BEACON_TOKEN` / `PLAUSIBLE_DOMAIN` / `GA_ID` | 위 선택에 맞춰 하나 |
 | `FEEDBACK_URL` | (선택) 의견 창구 링크(구글폼 권장). 설정하면 푸터에 "의견 보내기" 노출, 미설정이면 링크 없음 |
+| `GOOGLE_SITE_VERIFICATION` | (선택) 구글 서치콘솔 "HTML 태그" 방식의 content 값. 설정하면 `google-site-verification` 메타 출력 |
+| `NAVER_SITE_VERIFICATION` | (선택) 네이버 서치어드바이저 HTML 태그 content 값 → `naver-site-verification` 메타 출력 |
 
 ### C. Fly secret (런타임)
 - [x] `fly secrets set ALLOWED_ORIGIN=https://bokbulbok-party.fly.dev` — 소켓 CORS 고정(`server.ts`). 동일출처라 게임엔 필수 아님(미스매치여도 same-origin 통과)이나 정확성 위해 설정됨.
