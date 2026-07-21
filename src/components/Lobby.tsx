@@ -7,6 +7,8 @@ import { GamePicker } from './GamePicker';
 import { GameIntro } from './GameIntro';
 import { Logo } from './Logo';
 import { InviteSheet } from './InviteSheet';
+import { QRCode } from './QRCode';
+import { useInviteActions } from './useInviteActions';
 import { TiltPermissionGate } from '@/games/marble-tilt/TiltPermissionGate';
 import { AdSlot } from './AdSlot';
 import { getSocket } from '@/lib/socket-client';
@@ -43,6 +45,10 @@ export function Lobby({ inviteUrl, onChangeNickname }: { inviteUrl: string; onCh
   const someOffline = state.players.some((p) => !p.connected);
   const canStart = isHost && connectedCount >= 2;
   const canManageRoster = isHost && (state.status === 'lobby' || state.status === 'result');
+  // 실제 폰으로 들어온 참가자(비-manual)가 호스트뿐이면 초대가 다음 행동 —
+  // 인라인 QR 카드를 게임 선택보다 먼저 보여준다(랜딩 1단계 약속과 일치).
+  // 친구가 한 명이라도 스캔해 들어오면 카드가 사라지고 우상단 초대 버튼만 남는다.
+  const needsInvite = isHost && state.players.filter((p) => !p.manual).length < 2;
 
   function setLoserCount(c: number) {
     getSocket().emit('setLoserCount', { count: c });
@@ -146,6 +152,9 @@ export function Lobby({ inviteUrl, onChangeNickname }: { inviteUrl: string; onCh
             {ko.lobby.becameHost}
           </div>
         )}
+        {/* 혼자인 호스트: 초대 QR을 게임 선택보다 먼저 — 다음 행동을 화면이 알려준다 */}
+        {needsInvite && <InviteCard url={inviteUrl} />}
+
         {/* host controls first */}
         {isHost ? (
           <>
@@ -325,6 +334,37 @@ export function Lobby({ inviteUrl, onChangeNickname }: { inviteUrl: string; onCh
 
       {showInvite && <InviteSheet url={inviteUrl} onClose={() => setShowInvite(false)} />}
     </main>
+  );
+}
+
+// 로비 인라인 초대 카드 — 흰 배경 패널에 QR(스캔 대비 확보) + 복사/공유.
+// InviteSheet(모달)와 같은 액션 로직(useInviteActions) 공유.
+function InviteCard({ url }: { url: string }) {
+  const { copied, copy, share, shareSupported } = useInviteActions(url);
+  return (
+    <div className="rounded-2xl border border-amber-500/30 bg-amber-500/[0.06] p-4 flex flex-col items-center gap-3">
+      <div className="text-sm font-bold text-amber-200">{ko.lobby.inviteFirstTitle}</div>
+      <QRCode value={url} size={172} />
+      <p className="text-xs text-zinc-400 text-center">{ko.lobby.inviteFirstHint}</p>
+      <div className={clsx('w-full gap-2 pt-0.5', shareSupported ? 'grid grid-cols-2' : 'flex')}>
+        <button
+          type="button"
+          onClick={copy}
+          className="w-full py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-sm font-medium active:scale-[0.98]"
+        >
+          {copied ? ko.invite.copied : ko.lobby.copyLink}
+        </button>
+        {shareSupported && (
+          <button
+            type="button"
+            onClick={share}
+            className="py-2.5 rounded-xl bg-amber-400 text-zinc-900 text-sm font-bold active:scale-[0.98]"
+          >
+            {ko.lobby.share}
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 

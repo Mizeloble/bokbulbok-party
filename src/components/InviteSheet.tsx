@@ -1,47 +1,13 @@
 'use client';
 
-import { useState } from 'react';
 import { ko } from '@/lib/i18n';
 import { QRCode } from './QRCode';
+import { useInviteActions } from './useInviteActions';
 import { useModalA11y } from './useModalA11y';
 
 export function InviteSheet({ url, onClose }: { url: string; onClose: () => void }) {
-  const [copied, setCopied] = useState(false);
-  const [shareSupported] = useState(() => typeof navigator !== 'undefined' && 'share' in navigator);
+  const { copied, copy, share, shareSupported } = useInviteActions(url);
   const panelRef = useModalA11y(onClose);
-
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // fallback: select+copy
-      const ta = document.createElement('textarea');
-      ta.value = url;
-      document.body.appendChild(ta);
-      ta.select();
-      try {
-        document.execCommand('copy');
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
-      } finally {
-        document.body.removeChild(ta);
-      }
-    }
-  }
-
-  async function share() {
-    try {
-      await (navigator as Navigator & { share: (data: ShareData) => Promise<void> }).share({
-        title: ko.app.title,
-        text: ko.invite.shareText,
-        url,
-      });
-    } catch {
-      /* user cancelled */
-    }
-  }
 
   return (
     <div

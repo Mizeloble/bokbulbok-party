@@ -75,6 +75,9 @@ export const ko = {
     invite: '초대하기',
     inviteShort: '초대',
     inviteScan: '옆자리 사람이 스캔하면 같은 방 입장',
+    // 호스트 혼자일 때 로비 상단 인라인 QR 카드 — 랜딩 1단계("방을 만들면 QR이 떠요") 약속 이행.
+    inviteFirstTitle: '친구들을 초대하세요',
+    inviteFirstHint: '이 QR을 찍으면 바로 입장 · 멀리 있으면 링크 공유',
     moreGamesComingSoon: '다른 게임 준비 중',
     copyLink: '링크 복사',
     share: '공유하기',
